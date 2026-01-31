@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npx http-server -p 8080 -o",
     "dev": "npx http-server -p 8080 -o",
-    "build": "echo \"Static site - no build step required\" && exit 0"
+    "build": "mkdir -p dist && cp index.html poster-generator.html package.json dist/ && echo 'Build complete'"
   },
   "keywords": [
     "poster",
