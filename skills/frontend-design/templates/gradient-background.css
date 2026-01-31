@@ -1,0 +1,42 @@
+/* Gradient Background Template */
+
+:root {
+    --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    --gradient-2: linear-gradient(45deg, #fa709a 0%, #fee140 100%);
+    --gradient-3: linear-gradient(225deg, #4facfe 0%, #00f2fe 100%);
+    --gradient-4: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    --gradient-5: conic-gradient(from 0deg, #667eea, #764ba2, #f093fb, #fa709a, #667eea);
+    --gradient-6: radial-gradient(circle at 20% 50%, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    --gradient-7: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    --gradient-8: linear-gradient(45deg, #ff6b6b 0%, #feca57 50%, #48dbfb 100%);
+}
+
+.gradient-bg {
+    background: var(--gradient-1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animated gradient */
+.gradient-animate {
+    background: var(--gradient-5);
+    background-size: 400% 400%;
+    animation: gradientMove 15s ease infinite;
+}
+
+@keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Mesh gradient */
+.gradient-mesh {
+    background:
+        radial-gradient(at 40% 20%, hsla(280,100%,74%,1) 0px, transparent 50%),
+        radial-gradient(at 80% 0%, hsla(189,100%,56%,1) 0px, transparent 50%),
+        radial-gradient(at 0% 50%, hsla(355,100%,93%,1) 0px, transparent 50%),
+        radial-gradient(at 80% 50%, hsla(340,100%,76%,1) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, hsla(22,100%,77%,1) 0px, transparent 50%);
+    background-size: 100% 100%;
+}
