@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>海报生成器 | Poster Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        /* CSS 变量系统 */
+        :root {
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            --gradient-2: linear-gradient(45deg, #fa709a 0%, #fee140 100%);
+            --gradient-3: linear-gradient(225deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-4: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            --gradient-5: conic-gradient(from 0deg, #667eea, #764ba2, #f093fb, #fa709a, #667eea);
+            --gradient-6: repeating-linear-gradient(45deg, #667eea, #667eea 10px, #764ba2 10px, #764ba2 20px);
+            --gradient-7: radial-gradient(circle at 20% 50%, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            --gradient-8: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            
+            --font-display: 'Playfair Display', serif;
+            --font-title: 'Noto Serif SC', serif;
+            --font-body: 'Montserrat', 'Noto Serif SC', sans-serif;
+            
+            --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --shadow-strong: 0 12px 40px rgba(0, 0, 0, 0.15);
+            
+            --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-normal: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: #f8f6f1;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 3rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 3rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 控制面板 */
+        .control-panel {
+            background: #fff;
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-medium);
+            height: fit-content;
+            position: sticky;
+            top: 2rem;
+            max-height: calc(100vh - 4rem);
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .panel-title {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 0.5rem;
+        }
+
+        .panel-subtitle {
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        /* 表单组 */
+        .form-group {
+            margin-bottom: 1.75rem;
+        }
+
+        .form-label {
+            display: block;
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: #fff;
+            transition: all var(--transition-fast);
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        /* 渐变选择器 */
+        .gradient-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+        }
+
+        .gradient-option {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all var(--transition-fast);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gradient-option.active {
+            border-color: #667eea;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .gradient-option:hover {
+            transform: scale(1.05);
+        }
+
+        /* 导出按钮 */
+        .export-btn {
+            width: 100%;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 预览区域 */
+        .preview-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .preview-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .preview-title {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        /* 海报容器 */
+        .poster-container {
+            width: 100%;
+            max-width: 600px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: var(--shadow-strong);
+            overflow: hidden;
+        }
+
+        /* 海报主体 */
+        .poster {
+            position: relative;
+            min-height: 800px;
+            background: var(--gradient-1);
+            padding: 3rem;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .poster::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 90% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .poster-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 封面图 */
+        .poster-cover {
+            width: 100%;
+            height: 280px;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .poster-cover.active {
+            display: block;
+        }
+
+        .poster-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 标题 */
+        .poster-title {
+            font-family: var(--font-display);
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .poster-subtitle {
+            font-family: var(--font-body);
+            font-size: 1.5rem;
+            font-weight: 300;
+            opacity: 0.95;
+            margin-bottom: 2rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .poster-description {
+            font-family: var(--font-body);
+            font-size: 1.1rem;
+            line-height: 1.8;
+            opacity: 0.9;
+            margin-bottom: 2.5rem;
+            max-width: 90%;
+        }
+
+        /* 分割线 */
+        .poster-divider {
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+            margin: 2rem 0;
+        }
+
+        /* 区块标题 */
+        .poster-section-title {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            opacity: 0.95;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .poster-section-title::before {
+            content: '';
+            width: 30px;
+            height: 2px;
+            background: currentColor;
+        }
+
+        /* 嘉宾列表 */
+        .poster-guests {
+            margin-bottom: 2rem;
+        }
+
+        .poster-guest {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .poster-guest-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fff, rgba(255,255,255,0.5));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #667eea;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .poster-guest-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .poster-guest-info {
+            flex: 1;
+        }
+
+        .poster-guest-name {
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .poster-guest-title {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .poster-guest-bio {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
+            line-height: 1.4;
+        }
+
+        /* 线上会议信息 */
+        .poster-meeting {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(255,255,255,0.15);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .poster-meeting-title {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .poster-meeting-title::before {
+            content: '🎥';
+        }
+
+        .poster-meeting-info {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .poster-meeting-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .poster-meeting-item {
+            font-size: 0.95rem;
+        }
+
+        .poster-meeting-qr {
+            width: 100px;
+            height: 100px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 8px;
+            flex-shrink: 0;
+        }
+
+        /* 服务团队 */
+        .poster-team {
+            margin-bottom: 2rem;
+        }
+
+        .poster-team-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .poster-team-member {
+            padding: 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .poster-team-member-name {
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .poster-team-member-role {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        /* 二维码区域 */
+        .poster-qr {
+            display: flex;
+            align-items: flex-end;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .poster-qr-code {
+            width: 120px;
+            height: 120px;
+            background: #fff;
+            border-radius: 16px;
+            padding: 10px;
+            flex-shrink: 0;
+        }
+
+        .poster-qr-code svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .poster-qr-info {
+            flex: 1;
+        }
+
+        .poster-qr-text {
+            font-family: var(--font-body);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .poster-qr-sub {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* 对齐按钮 */
+        .align-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .align-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.625rem;
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            color: #666;
+        }
+
+        .align-btn:hover {
+            background: #e8e8e8;
+            border-color: #d0d0d0;
+        }
+
+        .align-btn.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: #fff;
+        }
+
+        /* 区块开关 */
+        .section-toggle {
+            padding: 1rem;
+            background: #f8f6f1;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        /* 分享嘉宾区块 */
+        .section-block {
+            background: #f8f6f1;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .guest-block {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .guest-remove-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all var(--transition-fast);
+        }
+
+        .guest-remove-btn:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+
+        .guest-photo-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 3px solid #667eea;
+        }
+
+        .guest-photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .guest-photo-preview span {
+            color: #999;
+            font-size: 0.8rem;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .control-panel {
+                position: static;
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+
+            .poster {
+                padding: 2rem;
+            }
+
+            .poster-title {
+                font-size: 2.5rem;
+            }
+
+            .poster-subtitle {
+                font-size: 1.2rem;
+            }
+
+            .gradient-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 控制面板 -->
+        <div class="control-panel">
+            <div class="panel-header">
+                <h1 class="panel-title">海报生成器</h1>
+                <p class="panel-subtitle">配置内容，一键导出精美海报</p>
+            </div>
+
+            <!-- 背景渐变选择 -->
+            <div class="form-group">
+                <label class="form-label">背景渐变</label>
+                <div class="gradient-grid" id="gradientGrid">
+                    <div class="gradient-option active" style="background: var(--gradient-1)" data-gradient="1"></div>
+                    <div class="gradient-option" style="background: var(--gradient-2)" data-gradient="2"></div>
+                    <div class="gradient-option" style="background: var(--gradient-3)" data-gradient="3"></div>
+                    <div class="gradient-option" style="background: var(--gradient-4)" data-gradient="4"></div>
+                    <div class="gradient-option" style="background: var(--gradient-5)" data-gradient="5"></div>
+                    <div class="gradient-option" style="background: var(--gradient-6)" data-gradient="6"></div>
+                    <div class="gradient-option" style="background: var(--gradient-7)" data-gradient="7"></div>
+                    <div class="gradient-option" style="background: var(--gradient-8)" data-gradient="8"></div>
+                </div>
+            </div>
+
+            <!-- 封面图 -->
+            <div class="form-group">
+                <label class="form-label">封面图（可选）</label>
+                <input type="file" class="form-input" id="coverImage" accept="image/*">
+            </div>
+
+            <!-- 主标题 -->
+            <div class="form-group">
+                <label class="form-label">主标题</label>
+                <input type="text" class="form-input" id="mainTitle" value="年度设计大会" style="margin-bottom: 0.5rem;">
+                <div class="align-buttons" id="mainTitleAlign">
+                    <button type="button" class="align-btn active" data-align="left" title="左对齐">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h18v2H3V4zm0 15h14v2H3v-2zm0-5h18v2H3v-2zm0-5h14v2H3V9z"/></svg>
+                    </button>
+                    <button type="button" class="align-btn" data-align="center" title="居中对齐">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h18v2H3V4zm2 15h14v2H5v-2zm-2-5h18v2H3v-2zm2-5h14v2H5V9z"/></svg>
+                    </button>
+                    <button type="button" class="align-btn" data-align="right" title="右对齐">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h18v2H3V4zm4 15h14v2H7v-2zm-4-5h18v2H3v-2zm4-5h14v2H7V9z"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 副标题 -->
+            <div class="form-group">
+                <label class="form-label">副标题</label>
+                <input type="text" class="form-input" id="subTitle" value="Annual Design Conference 2024" style="margin-bottom: 0.5rem;">
+                <div class="align-buttons" id="subTitleAlign">
+                    <button type="button" class="align-btn active" data-align="left" title="左对齐">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h18v2H3V4zm0 15h14v2H3v-2zm0-5h18v2H3v-2zm0-5h14v2H3V9z"/></svg>
+                    </button>
+                    <button type="button" class="align-btn" data-align="center" title="居中对齐">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h18v2H3V4zm2 15h14v2H5v-2zm-2-5h18v2H3v-2zm2-5h14v2H5V9z"/></svg>
+                    </button>
+                    <button type="button" class="align-btn" data-align="right" title="右对齐">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h18v2H3V4zm4 15h14v2H7v-2zm-4-5h18v2H3v-2zm4-5h14v2H7V9z"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 描述 -->
+            <div class="form-group">
+                <label class="form-label">活动描述</label>
+                <textarea class="form-textarea" id="description">探索设计的边界，共创美好未来。本次大会将汇聚全球顶尖设计师，分享最新设计趋势与创新思维。</textarea>
+            </div>
+
+            <!-- 主持人 -->
+            <div class="form-group">
+                <label class="form-label">主持人</label>
+                <input type="text" class="form-input" id="host" value="张明">
+            </div>
+
+            <!-- 主持人区块开关 -->
+            <div class="section-toggle">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; margin-bottom: 1rem;">
+                    <input type="checkbox" id="showHost" checked style="width: 20px; height: 20px; cursor: pointer;">
+                    <span class="form-label" style="margin: 0;">显示主持人区块</span>
+                </label>
+            </div>
+
+            <!-- 主持人 -->
+            <div class="form-group" id="hostSection">
+                <label class="form-label">主持人</label>
+                <input type="text" class="form-input" id="host" value="张明">
+            </div>
+
+            <!-- 分享嘉宾区块 -->
+            <div class="section-block">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <label class="form-label" style="margin: 0;">分享嘉宾</label>
+                    <button type="button" id="addGuestBtn" style="padding: 0.5rem 1rem; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem;">+ 添加嘉宾</button>
+                </div>
+                <div id="shareGuestsContainer"></div>
+            </div>
+
+            <!-- 总结嘉宾区块开关 -->
+            <div class="section-toggle">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; margin-bottom: 1rem;">
+                    <input type="checkbox" id="showSummary" checked style="width: 20px; height: 20px; cursor: pointer;">
+                    <span class="form-label" style="margin: 0;">显示总结嘉宾区块</span>
+                </label>
+            </div>
+
+            <!-- 总结嘉宾 -->
+            <div class="form-group" id="summarySection">
+                <label class="form-label">总结嘉宾</label>
+                <input type="text" class="form-input" id="summaryGuest" value="刘静">
+            </div>
+
+            <!-- 总结嘉宾 -->
+            <div class="form-group">
+                <label class="form-label">总结嘉宾</label>
+                <input type="text" class="form-input" id="summaryGuest" value="刘静">
+            </div>
+
+            <!-- 线上会议区块开关 -->
+            <div class="section-toggle">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; margin-bottom: 1rem;">
+                    <input type="checkbox" id="showMeeting" checked style="width: 20px; height: 20px; cursor: pointer;">
+                    <span class="form-label" style="margin: 0;">显示线上会议区块</span>
+                </label>
+            </div>
+
+            <!-- 线上会议 -->
+            <div class="form-group" id="meetingSection">
+                <label class="form-label">线上会议信息</label>
+                <input type="text" class="form-input" id="meetingPlatform" value="腾讯会议" placeholder="会议平台" style="margin-bottom: 0.5rem;">
+                <input type="text" class="form-input" id="meetingNumber" value="888 888 888" placeholder="会议号" style="margin-bottom: 0.5rem;">
+                <input type="text" class="form-input" id="meetingTime" value="2024年12月15日 14:00-18:00" placeholder="会议时间">
+            </div>
+
+            <!-- 服务团队区块开关 -->
+            <div class="section-toggle">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; margin-bottom: 1rem;">
+                    <input type="checkbox" id="showTeam" checked style="width: 20px; height: 20px; cursor: pointer;">
+                    <span class="form-label" style="margin: 0;">显示服务团队区块</span>
+                </label>
+            </div>
+
+            <!-- 服务团队 -->
+            <div class="form-group" id="teamSection">
+                <label class="form-label">服务团队（每行一个：姓名-角色）</label>
+                <textarea class="form-textarea" id="team">小王-活动策划
+小李-现场执行
+小张-媒体宣传
+小陈-后勤保障</textarea>
+            </div>
+
+            <!-- 二维码区块开关 -->
+            <div class="section-toggle">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; margin-bottom: 1rem;">
+                    <input type="checkbox" id="showQR" checked style="width: 20px; height: 20px; cursor: pointer;">
+                    <span class="form-label" style="margin: 0;">显示二维码区块</span>
+                </label>
+            </div>
+
+            <!-- 二维码设置 -->
+            <div class="form-group" id="qrSection">
+                <label class="form-label">二维码</label>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <button type="button" class="qr-type-btn active" data-type="text" style="flex: 1; padding: 0.75rem; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer;">链接生成</button>
+                    <button type="button" class="qr-type-btn" data-type="image" style="flex: 1; padding: 0.75rem; background: #f5f5f5; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer;">上传图片</button>
+                </div>
+                <div id="qrLinkContainer">
+                    <input type="text" class="form-input" id="qrLink" placeholder="输入链接生成二维码" style="margin-bottom: 0.5rem;">
+                </div>
+                <div id="qrImageContainer" style="display: none;">
+                    <input type="file" class="form-input" id="qrImage" accept="image/*">
+                </div>
+                <input type="text" class="form-input" id="qrText" value="扫码了解更多" placeholder="二维码提示文字" style="margin-top: 0.75rem;">
+            </div>
+
+            <!-- 导出格式选择 -->
+            <div class="form-group">
+                <label class="form-label">导出格式</label>
+                <select class="form-input" id="exportFormat">
+                    <option value="jpeg" selected>JPEG - 高质量，文件小（推荐）</option>
+                    <option value="png">PNG - 可能导致浏览器卡顿，请谨慎使用</option>
+                </select>
+                <p style="font-size: 0.75rem; color: #e74c3c; margin-top: 0.5rem;">
+                    ⚠️ 警告：PNG 导出会消耗大量内存，第二次导出可能导致浏览器无响应
+                </p>
+            </div>
+
+            <!-- 导出按钮 -->
+            <button class="export-btn" id="exportBtn">📥 导出海报</button>
+        </div>
+
+        <!-- 预览区域 -->
+        <div class="preview-area">
+            <div class="preview-header">
+                <h2 class="preview-title">实时预览</h2>
+            </div>
+
+            <div class="poster-container">
+                <div class="poster" id="poster">
+                    <div class="poster-content">
+                        <!-- 封面图 -->
+                        <div class="poster-cover" id="posterCover">
+                            <img src="" alt="封面" id="posterCoverImg">
+                        </div>
+
+                        <!-- 主标题 -->
+                        <h1 class="poster-title" id="posterMainTitle">年度设计大会</h1>
+                        
+                        <!-- 副标题 -->
+                        <p class="poster-subtitle" id="posterSubTitle">Annual Design Conference 2024</p>
+                        
+                        <!-- 描述 -->
+                        <p class="poster-description" id="posterDescription">
+                            探索设计的边界，共创美好未来。本次大会将汇聚全球顶尖设计师，分享最新设计趋势与创新思维。
+                        </p>
+
+                        <!-- 分割线 -->
+                        <div class="poster-divider"></div>
+
+                        <!-- 主持人 -->
+                        <div class="poster-guests">
+                            <div class="poster-section-title">主持人 Host</div>
+                            <div class="poster-guest">
+                                <div class="poster-guest-avatar" id="hostAvatar">张</div>
+                                <div class="poster-guest-info">
+                                    <div class="poster-guest-name" id="posterHost">张明</div>
+                                    <div class="poster-guest-title">活动主持</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 分享嘉宾 -->
+                        <div class="poster-guests">
+                            <div class="poster-section-title">分享嘉宾 Speakers</div>
+                            <div id="shareGuestsList">
+                                <div class="poster-guest">
+                                    <div class="poster-guest-avatar">李</div>
+                                    <div class="poster-guest-info">
+                                        <div class="poster-guest-name">李华</div>
+                                        <div class="poster-guest-title">资深设计师</div>
+                                    </div>
+                                </div>
+                                <div class="poster-guest">
+                                    <div class="poster-guest-avatar">王</div>
+                                    <div class="poster-guest-info">
+                                        <div class="poster-guest-name">王芳</div>
+                                        <div class="poster-guest-title">创意总监</div>
+                                    </div>
+                                </div>
+                                <div class="poster-guest">
+                                    <div class="poster-guest-avatar">陈</div>
+                                    <div class="poster-guest-info">
+                                        <div class="poster-guest-name">陈强</div>
+                                        <div class="poster-guest-title">用户体验专家</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 总结嘉宾 -->
+                        <div class="poster-guests">
+                            <div class="poster-section-title">总结嘉宾 Summary</div>
+                            <div class="poster-guest">
+                                <div class="poster-guest-avatar" id="summaryAvatar">刘</div>
+                                <div class="poster-guest-info">
+                                    <div class="poster-guest-name" id="posterSummaryGuest">刘静</div>
+                                    <div class="poster-guest-title">活动总结</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 分割线 -->
+                        <div class="poster-divider"></div>
+
+                        <!-- 线上会议信息 -->
+                        <div class="poster-meeting">
+                            <div class="poster-meeting-title">线上会议 Online Meeting</div>
+                            <div class="poster-meeting-info">
+                                <div class="poster-meeting-details">
+                                    <div class="poster-meeting-item" id="posterMeetingPlatform">腾讯会议</div>
+                                    <div class="poster-meeting-item" id="posterMeetingNumber">888 888 888</div>
+                                    <div class="poster-meeting-item" id="posterMeetingTime">2024年12月15日 14:00-18:00</div>
+                                </div>
+                                <div class="poster-meeting-qr">
+                                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="0" y="0" width="100" height="100" fill="#000"/>
+                                        <rect x="5" y="5" width="30" height="30" fill="#fff"/>
+                                        <rect x="10" y="10" width="20" height="20" fill="#000"/>
+                                        <rect x="65" y="5" width="30" height="30" fill="#fff"/>
+                                        <rect x="70" y="10" width="20" height="20" fill="#000"/>
+                                        <rect x="5" y="65" width="30" height="30" fill="#fff"/>
+                                        <rect x="10" y="70" width="20" height="20" fill="#000"/>
+                                        <rect x="45" y="15" width="10" height="10" fill="#fff"/>
+                                        <rect x="60" y="45" width="10" height="10" fill="#fff"/>
+                                        <rect x="45" y="45" width="10" height="10" fill="#fff"/>
+                                        <rect x="15" y="45" width="10" height="10" fill="#fff"/>
+                                        <rect x="80" y="60" width="10" height="10" fill="#fff"/>
+                                        <rect x="45" y="75" width="10" height="10" fill="#fff"/>
+                                        <rect x="70" y="75" width="10" height="10" fill="#fff"/>
+                                        <rect x="15" y="80" width="10" height="10" fill="#fff"/>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 分割线 -->
+                        <div class="poster-divider"></div>
+
+                        <!-- 服务团队 -->
+                        <div class="poster-team">
+                            <div class="poster-section-title">服务团队 Team</div>
+                            <div class="poster-team-list" id="teamList">
+                                <div class="poster-team-member">
+                                    <div class="poster-team-member-name">小王</div>
+                                    <div class="poster-team-member-role">活动策划</div>
+                                </div>
+                                <div class="poster-team-member">
+                                    <div class="poster-team-member-name">小李</div>
+                                    <div class="poster-team-member-role">现场执行</div>
+                                </div>
+                                <div class="poster-team-member">
+                                    <div class="poster-team-member-name">小张</div>
+                                    <div class="poster-team-member-role">媒体宣传</div>
+                                </div>
+                                <div class="poster-team-member">
+                                    <div class="poster-team-member-name">小陈</div>
+                                    <div class="poster-team-member-role">后勤保障</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 二维码区域 -->
+                        <div class="poster-qr">
+                            <div class="poster-qr-code">
+                                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="0" y="0" width="100" height="100" fill="#000"/>
+                                    <rect x="5" y="5" width="30" height="30" fill="#fff"/>
+                                    <rect x="10" y="10" width="20" height="20" fill="#000"/>
+                                    <rect x="65" y="5" width="30" height="30" fill="#fff"/>
+                                    <rect x="70" y="10" width="20" height="20" fill="#000"/>
+                                    <rect x="5" y="65" width="30" height="30" fill="#fff"/>
+                                    <rect x="10" y="70" width="20" height="20" fill="#000"/>
+                                    <rect x="45" y="15" width="10" height="10" fill="#fff"/>
+                                    <rect x="60" y="45" width="10" height="10" fill="#fff"/>
+                                    <rect x="45" y="45" width="10" height="10" fill="#fff"/>
+                                    <rect x="15" y="45" width="10" height="10" fill="#fff"/>
+                                    <rect x="80" y="60" width="10" height="10" fill="#fff"/>
+                                    <rect x="45" y="75" width="10" height="10" fill="#fff"/>
+                                    <rect x="70" y="75" width="10" height="10" fill="#fff"/>
+                                    <rect x="15" y="80" width="10" height="10" fill="#fff"/>
+                                </svg>
+                            </div>
+                            <div class="poster-qr-info">
+                                <div class="poster-qr-text" id="posterQrText">扫码了解更多</div>
+                                <div class="poster-qr-sub">Scan for more details</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM 已加载');
+
+            // 控制元素
+            const gradientGrid = document.getElementById('gradientGrid');
+            const poster = document.getElementById('poster');
+            const coverImage = document.getElementById('coverImage');
+            const mainTitle = document.getElementById('mainTitle');
+            const subTitle = document.getElementById('subTitle');
+            const description = document.getElementById('description');
+            const host = document.getElementById('host');
+            const summaryGuest = document.getElementById('summaryGuest');
+            const meetingPlatform = document.getElementById('meetingPlatform');
+            const meetingNumber = document.getElementById('meetingNumber');
+            const meetingTime = document.getElementById('meetingTime');
+            const team = document.getElementById('team');
+            const qrText = document.getElementById('qrText');
+            const exportBtn = document.getElementById('exportBtn');
+            const mainTitleAlign = document.getElementById('mainTitleAlign');
+            const subTitleAlign = document.getElementById('subTitleAlign');
+            const shareGuestsContainer = document.getElementById('shareGuestsContainer');
+            const addGuestBtn = document.getElementById('addGuestBtn');
+
+            // 海报元素
+            const posterCover = document.getElementById('posterCover');
+            const posterCoverImg = document.getElementById('posterCoverImg');
+            const posterMainTitle = document.getElementById('posterMainTitle');
+            const posterSubTitle = document.getElementById('posterSubTitle');
+            const posterDescription = document.getElementById('posterDescription');
+            const posterHost = document.getElementById('posterHost');
+            const hostAvatar = document.getElementById('hostAvatar');
+            const shareGuestsList = document.getElementById('shareGuestsList');
+            const posterSummaryGuest = document.getElementById('posterSummaryGuest');
+            const summaryAvatar = document.getElementById('summaryAvatar');
+            const posterMeetingPlatform = document.getElementById('posterMeetingPlatform');
+            const posterMeetingNumber = document.getElementById('posterMeetingNumber');
+            const posterMeetingTime = document.getElementById('posterMeetingTime');
+            const teamList = document.getElementById('teamList');
+            const posterQrText = document.getElementById('posterQrText');
+            const exportFormat = document.getElementById('exportFormat');
+
+            // 区块控制元素
+            const showHost = document.getElementById('showHost');
+            const showSummary = document.getElementById('showSummary');
+            const showMeeting = document.getElementById('showMeeting');
+            const showTeam = document.getElementById('showTeam');
+            const showQR = document.getElementById('showQR');
+
+            // 区块元素
+            const hostSection = document.getElementById('hostSection');
+            const summarySection = document.getElementById('summarySection');
+            const meetingSection = document.getElementById('meetingSection');
+            const teamSection = document.getElementById('teamSection');
+            const qrSection = document.getElementById('qrSection');
+            const posterHostSection = document.querySelector('.poster-guests:has(#posterHost)');
+            const posterSummarySection = document.querySelector('.poster-guests:has(#posterSummaryGuest)');
+            const posterMeetingSection = document.querySelector('.poster-meeting');
+            const posterTeamSection = document.querySelector('.poster-team');
+            const posterQrSection = document.querySelector('.poster-qr');
+
+            // 二维码控制元素
+            const qrLinkContainer = document.getElementById('qrLinkContainer');
+            const qrImageContainer = document.getElementById('qrImageContainer');
+            const qrLink = document.getElementById('qrLink');
+            const qrImage = document.getElementById('qrImage');
+            const posterQrCode = document.querySelector('.poster-qr-code');
+
+            console.log('元素获取:', {
+                gradientGrid, poster, mainTitle, posterMainTitle
+            });
+
+            // 渐变选择
+            if (gradientGrid) {
+                gradientGrid.addEventListener('click', (e) => {
+                    const target = e.target;
+                    if (target.classList.contains('gradient-option')) {
+                        document.querySelectorAll('.gradient-option').forEach(opt => {
+                            opt.classList.remove('active');
+                        });
+                        target.classList.add('active');
+
+                        const gradientNum = target.dataset.gradient;
+                        console.log('切换渐变:', gradientNum);
+                        if (poster) {
+                            poster.style.background = `var(--gradient-${gradientNum})`;
+                        }
+                    }
+                });
+            }
+
+            // 主标题对齐
+            if (mainTitleAlign && posterMainTitle) {
+                mainTitleAlign.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.align-btn');
+                    if (btn) {
+                        const align = btn.dataset.align;
+                        // 更新按钮状态
+                        mainTitleAlign.querySelectorAll('.align-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        // 应用对齐
+                        posterMainTitle.style.textAlign = align;
+                    }
+                });
+            }
+
+            // 副标题对齐
+            if (subTitleAlign && posterSubTitle) {
+                subTitleAlign.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.align-btn');
+                    if (btn) {
+                        const align = btn.dataset.align;
+                        // 更新按钮状态
+                        subTitleAlign.querySelectorAll('.align-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        // 应用对齐
+                        posterSubTitle.style.textAlign = align;
+                    }
+                });
+            }
+
+            // 封面图
+            if (coverImage && posterCover && posterCoverImg) {
+                coverImage.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            posterCoverImg.src = event.target.result;
+                            posterCover.classList.add('active');
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        posterCover.classList.remove('active');
+                    }
+                });
+            }
+
+            // 主标题
+            if (mainTitle && posterMainTitle) {
+                mainTitle.addEventListener('input', (e) => {
+                    posterMainTitle.textContent = e.target.value || '主标题';
+                });
+            }
+
+            // 副标题
+            if (subTitle && posterSubTitle) {
+                subTitle.addEventListener('input', (e) => {
+                    posterSubTitle.textContent = e.target.value || '副标题';
+                });
+            }
+
+            // 描述
+            if (description && posterDescription) {
+                description.addEventListener('input', (e) => {
+                    posterDescription.textContent = e.target.value || '活动描述';
+                });
+            }
+
+            // 主持人
+            if (host && posterHost && hostAvatar) {
+                host.addEventListener('input', (e) => {
+                    const name = e.target.value;
+                    posterHost.textContent = name || '主持人';
+                    hostAvatar.textContent = name ? name.charAt(0) : '主';
+                });
+            }
+
+            // 分享嘉宾功能
+            const createGuestBlock = (index, data = {}) => {
+                const block = document.createElement('div');
+                block.className = 'guest-block';
+                block.dataset.index = index;
+                block.innerHTML = `
+                    <button type="button" class="guest-remove-btn" title="删除嘉宾">×</button>
+                    <div style="display: flex; gap: 1rem;">
+                        <div class="guest-photo-preview">
+                            <span id="photoPreview-${index}">照片预览</span>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="margin-bottom: 0.75rem;">
+                                <label style="font-size: 0.8rem; color: #666; display: block; margin-bottom: 0.25rem;">姓名</label>
+                                <input type="text" class="form-input guest-name" value="${data.name || ''}" placeholder="姓名">
+                            </div>
+                            <div style="margin-bottom: 0.75rem;">
+                                <label style="font-size: 0.8rem; color: #666; display: block; margin-bottom: 0.25rem;">头衔</label>
+                                <input type="text" class="form-input guest-title" value="${data.title || ''}" placeholder="头衔">
+                            </div>
+                            <div style="margin-bottom: 0.75rem;">
+                                <label style="font-size: 0.8rem; color: #666; display: block; margin-bottom: 0.25rem;">简介</label>
+                                <textarea class="form-textarea guest-bio" placeholder="嘉宾简介">${data.bio || ''}</textarea>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: #666; display: block; margin-bottom: 0.25rem;">照片</label>
+                                <input type="file" class="form-input guest-photo" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // 照片预览
+                const photoInput = block.querySelector('.guest-photo');
+                const photoPreview = block.querySelector('.guest-photo-preview span');
+                photoInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            photoPreview.innerHTML = `<img src="${ev.target.result}">`;
+                            updateShareGuests();
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        photoPreview.textContent = '照片预览';
+                        updateShareGuests();
+                    }
+                });
+
+                // 删除按钮
+                block.querySelector('.guest-remove-btn').addEventListener('click', () => {
+                    const blocks = shareGuestsContainer.querySelectorAll('.guest-block');
+                    if (blocks.length > 1) {
+                        block.remove();
+                        updateShareGuests();
+                    } else {
+                        alert('至少保留一个嘉宾');
+                    }
+                });
+
+                return block;
+            };
+
+            // 初始化嘉宾
+            const initGuests = () => {
+                shareGuestsContainer.innerHTML = '';
+                const defaultGuests = [
+                    { name: '李华', title: '资深设计师', bio: '10年设计经验，专注用户体验设计' },
+                    { name: '王芳', title: '创意总监', bio: '曾获多项国际设计奖项' },
+                    { name: '陈强', title: '用户体验专家', bio: '擅长用户研究与交互设计' }
+                ];
+                defaultGuests.forEach((guest, index) => {
+                    shareGuestsContainer.appendChild(createGuestBlock(index, guest));
+                });
+                updateShareGuests();
+            };
+
+            // 添加嘉宾
+            if (addGuestBtn) {
+                addGuestBtn.addEventListener('click', () => {
+                    const blocks = shareGuestsContainer.querySelectorAll('.guest-block');
+                    const newIndex = blocks.length;
+                    shareGuestsContainer.appendChild(createGuestBlock(newIndex));
+                });
+            }
+
+            // 更新嘉宾列表
+            const updateShareGuests = () => {
+                const blocks = shareGuestsContainer.querySelectorAll('.guest-block');
+                shareGuestsList.innerHTML = '';
+
+                blocks.forEach(block => {
+                    const name = block.querySelector('.guest-name').value;
+                    const title = block.querySelector('.guest-title').value;
+                    const bio = block.querySelector('.guest-bio').value;
+                    const photoPreviewImg = block.querySelector('.guest-photo-preview img');
+                    const initial = name ? name.charAt(0) : '嘉';
+
+                    const guestElement = document.createElement('div');
+                    guestElement.className = 'poster-guest';
+
+                    let avatarContent = initial;
+                    if (photoPreviewImg) {
+                        avatarContent = `<img src="${photoPreviewImg.src}" alt="${name}">`;
+                    }
+
+                    guestElement.innerHTML = `
+                        <div class="poster-guest-avatar">${avatarContent}</div>
+                        <div class="poster-guest-info">
+                            <div class="poster-guest-name">${name || '嘉宾'}</div>
+                            <div class="poster-guest-title">${title || ''}</div>
+                            ${bio ? `<div class="poster-guest-bio">${bio}</div>` : ''}
+                        </div>
+                    `;
+
+                    shareGuestsList.appendChild(guestElement);
+                });
+            };
+
+            // 监听嘉宾信息变化
+            shareGuestsContainer.addEventListener('input', updateShareGuests);
+
+            // 初始化嘉宾列表
+            initGuests();
+
+            // 总结嘉宾
+            if (summaryGuest && posterSummaryGuest && summaryAvatar) {
+                summaryGuest.addEventListener('input', (e) => {
+                    const name = e.target.value;
+                    posterSummaryGuest.textContent = name || '总结嘉宾';
+                    summaryAvatar.textContent = name ? name.charAt(0) : '总';
+                });
+            }
+
+            // 线上会议
+            if (meetingPlatform && posterMeetingPlatform) {
+                meetingPlatform.addEventListener('input', (e) => {
+                    posterMeetingPlatform.textContent = e.target.value || '会议平台';
+                });
+            }
+
+            if (meetingNumber && posterMeetingNumber) {
+                meetingNumber.addEventListener('input', (e) => {
+                    posterMeetingNumber.textContent = e.target.value || '会议号';
+                });
+            }
+
+            if (meetingTime && posterMeetingTime) {
+                meetingTime.addEventListener('input', (e) => {
+                    posterMeetingTime.textContent = e.target.value || '会议时间';
+                });
+            }
+
+            // 服务团队
+            if (team && teamList) {
+                const updateTeam = () => {
+                    const lines = team.value.split('\n').filter(line => line.trim());
+                    teamList.innerHTML = lines.map(line => {
+                        const [name, role] = line.split('-').map(s => s.trim());
+                        return `
+                            <div class="poster-team-member">
+                                <div class="poster-team-member-name">${name || '成员'}</div>
+                                <div class="poster-team-member-role">${role || ''}</div>
+                            </div>
+                        `;
+                    }).join('');
+                };
+                team.addEventListener('input', updateTeam);
+            }
+
+            // 二维码文字
+            if (qrText && posterQrText) {
+                qrText.addEventListener('input', (e) => {
+                    posterQrText.textContent = e.target.value || '扫码了解更多';
+                });
+            }
+
+            // 区块显示控制
+            const toggleSection = (checkbox, inputSection, posterSection) => {
+                if (!checkbox || !inputSection) return;
+
+                const updateVisibility = () => {
+                    inputSection.style.display = checkbox.checked ? 'block' : 'none';
+                    if (posterSection) {
+                        posterSection.style.display = checkbox.checked ? 'block' : 'none';
+                    }
+                };
+
+                checkbox.addEventListener('change', updateVisibility);
+                updateVisibility();
+            };
+
+            toggleSection(showHost, hostSection, document.querySelector('.poster-guests:first-of-type'));
+            toggleSection(showSummary, summarySection, document.querySelector('.poster-guests:nth-of-type(3)'));
+            toggleSection(showMeeting, meetingSection, posterMeetingSection);
+            toggleSection(showTeam, teamSection, posterTeamSection);
+            toggleSection(showQR, qrSection, posterQrSection);
+
+            // 二维码类型切换
+            const qrTypeBtns = document.querySelectorAll('.qr-type-btn');
+            qrTypeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    qrTypeBtns.forEach(b => {
+                        b.classList.remove('active');
+                        b.style.background = '#f5f5f5';
+                        b.style.color = '#666';
+                    });
+                    btn.classList.add('active');
+                    btn.style.background = '#667eea';
+                    btn.style.color = '#fff';
+
+                    const type = btn.dataset.type;
+                    if (type === 'text') {
+                        qrLinkContainer.style.display = 'block';
+                        qrImageContainer.style.display = 'none';
+                        // 生成二维码
+                        if (qrLink.value) {
+                            const qrCode = document.createElement('img');
+                            qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(qrLink.value)}`;
+                            posterQrCode.innerHTML = qrCode;
+                        }
+                    } else {
+                        qrLinkContainer.style.display = 'none';
+                        qrImageContainer.style.display = 'block';
+                    }
+                });
+            });
+
+            // 二维码链接生成
+            if (qrLink) {
+                qrLink.addEventListener('input', (e) => {
+                    const url = e.target.value;
+                    if (url) {
+                        const qrCode = document.createElement('img');
+                        qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(url)}`;
+                        posterQrCode.innerHTML = qrCode;
+                    }
+                });
+            }
+
+            // 二维码图片上传
+            if (qrImage) {
+                qrImage.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            const img = document.createElement('img');
+                            img.src = ev.target.result;
+                            img.style.width = '100%';
+                            img.style.height = '100%';
+                            posterQrCode.innerHTML = img;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            // 导出功能
+            if (exportBtn && poster) {
+                let isExporting = false;
+                let exportCount = 0;
+
+                exportBtn.addEventListener('click', async () => {
+                    // 防止重复点击
+                    if (isExporting) {
+                        alert('正在导出中，请稍候...');
+                        return;
+                    }
+
+                    const format = exportFormat ? exportFormat.value : 'jpeg';
+
+                    // PNG 格式警告和限制
+                    if (format === 'png') {
+                        if (exportCount > 0 && exportCount % 2 === 0) {
+                            const confirmContinue = confirm(
+                                '⚠️ 警告：PNG 导出会消耗大量内存，可能导致浏览器无响应。\n\n' +
+                                '建议：\n' +
+                                '1. 使用 JPEG 格式（质量相同，文件更小）\n' +
+                                '2. 刷新页面后再导出 PNG\n\n' +
+                                '是否继续导出 PNG？'
+                            );
+                            if (!confirmContinue) {
+                                return;
+                            }
+                        }
+
+                        // PNG 警告
+                        if (exportCount === 0) {
+                            const confirmFirst = confirm(
+                                '⚠️ 即将导出 PNG 格式\n\n' +
+                                'PNG 格式文件较大且消耗大量内存。\n' +
+                                '建议使用 JPEG 格式以获得更好的体验。\n\n' +
+                                '是否继续导出 PNG？'
+                            );
+                            if (!confirmFirst) {
+                                exportFormat.value = 'jpeg';
+                                format = 'jpeg';
+                            }
+                        }
+                    }
+
+                    isExporting = true;
+                    exportBtn.textContent = '⏳ 导出中...';
+                    exportBtn.disabled = true;
+                    exportCount++;
+
+                    let canvas = null;
+
+                    try {
+                        const posterContainer = document.querySelector('.poster-container');
+
+                        // 根据导出格式选择不同的参数
+                        // PNG 使用更低的 scale，避免内存溢出
+                        const scale = format === 'png' ? 1.5 : 3;
+
+                        // 使用 Promise.race 添加超时机制
+                        const html2canvasPromise = html2canvas(posterContainer, {
+                            scale: scale,
+                            useCORS: true,
+                            backgroundColor: '#ffffff',
+                            logging: false,
+                            allowTaint: false,
+                            imageTimeout: 8000,
+                            // 优化渲染性能
+                            removeContainer: true,
+                            // 限制最大尺寸，防止内存溢出
+                            maxWidth: 1500,
+                            maxHeight: 4000,
+                            // 禁用某些特性以提升性能
+                            foreignObjectRendering: false,
+                            onclone: function(clonedDoc) {
+                                const clonedContainer = clonedDoc.querySelector('.poster-container');
+                                const clonedPoster = clonedDoc.querySelector('.poster');
+
+                                if (clonedContainer) {
+                                    clonedContainer.style.borderRadius = '20px';
+                                    clonedContainer.style.boxShadow = 'none';
+                                }
+
+                                if (clonedPoster) {
+                                    const computedStyle = window.getComputedStyle(poster);
+                                    clonedPoster.style.background = computedStyle.background;
+                                    clonedPoster.style.backgroundImage = computedStyle.backgroundImage;
+                                }
+
+                                const allElements = clonedDoc.querySelectorAll('*');
+                                allElements.forEach(el => {
+                                    el.style.letterSpacing = 'normal';
+                                    el.style.fontSmoothing = 'antialiased';
+                                    el.style.webkitFontSmoothing = 'antialiased';
+                                });
+                            }
+                        });
+
+                        // 30秒超时
+                        const timeoutPromise = new Promise((_, reject) => {
+                            setTimeout(() => reject(new Error('导出超时，请刷新页面后重试')), 30000);
+                        });
+
+                        canvas = await Promise.race([html2canvasPromise, timeoutPromise]);
+
+                        const quality = format === 'jpeg' ? 0.92 : undefined;
+                        const mimeType = `image/${format}`;
+                        const extension = format === 'jpeg' ? 'jpg' : 'png';
+
+                        // 使用 Blob 而不是 dataURL，减少内存占用
+                        canvas.toBlob((blob) => {
+                            if (!blob) {
+                                throw new Error('生成图片失败');
+                            }
+
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.download = `poster-${Date.now()}.${extension}`;
+                            link.href = url;
+                            link.click();
+
+                            // 延迟释放 URL
+                            setTimeout(() => URL.revokeObjectURL(url), 100);
+
+                            exportBtn.textContent = '✅ 导出成功！';
+                            setTimeout(() => {
+                                exportBtn.textContent = '📥 导出海报';
+                                exportBtn.disabled = false;
+                                isExporting = false;
+                            }, 2000);
+
+                            // 释放 canvas 资源
+                            if (canvas) {
+                                canvas.width = 0;
+                                canvas.height = 0;
+                            }
+                        }, mimeType, quality);
+
+                    } catch (error) {
+                        console.error('导出失败:', error);
+                        alert('导出失败：' + error.message + '\n\n建议：刷新页面后重试，或使用 JPEG 格式。');
+                        exportBtn.textContent = '❌ 导出失败';
+                        setTimeout(() => {
+                            exportBtn.textContent = '📥 导出海报';
+                            exportBtn.disabled = false;
+                            isExporting = false;
+                        }, 2000);
+
+                        // 释放 canvas 资源
+                        if (canvas) {
+                            canvas.width = 0;
+                            canvas.height = 0;
+                        }
+                    }
+                });
+            }
+
+            console.log('事件监听器已绑定');
+        });
+    </script>
+</body>
+</html>
