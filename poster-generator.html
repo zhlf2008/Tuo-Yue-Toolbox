@@ -7,6 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
     <style>
         /* CSS 变量系统 */
         :root {
@@ -434,6 +436,49 @@
             font-size: 0.875rem;
         }
 
+        .image-preview-remove:hover {
+            background: #c0392b;
+        }
+
+        .image-preview-remove:active {
+            background: #a93226;
+        }
+
+        /* 图片链接输入框样式 */
+        .image-link-input-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: stretch;
+        }
+
+        .image-link-input-group .form-input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .image-link-btn {
+            padding: 0.75rem 1rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .image-link-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .image-link-btn:active {
+            background: #4f63c6;
+            transform: translateY(0);
+        }
+
         /* 对齐按钮 */
         .align-buttons {
             display: flex;
@@ -541,7 +586,7 @@
         .guest-photo-preview img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: cover;  /* 恢复 cover 以确保照片填满容器 */
             max-width: 100%;
             max-height: 100%;
             display: block;
@@ -988,7 +1033,7 @@
         /* 文本框样式 */
         .poster-description.style-default {
             line-height: 1.8;
-            opacity: 0.85;
+            opacity: 0.95;
         }
 
         .poster-description.style-elegant {
@@ -1001,7 +1046,7 @@
 
         .poster-description.style-compact {
             line-height: 1.5;
-            opacity: 0.8;
+            opacity: 0.9;
             font-size: 0.95rem;
         }
 
@@ -1010,18 +1055,19 @@
             padding: 1.5rem;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
-            border-left: 4px solid rgba(255, 255, 255, 0.3);
+            border-left: 4px solid currentColor;
+            opacity: 0.92;
         }
 
         .poster-description.style-shadow {
             line-height: 1.7;
-            opacity: 0.85;
+            opacity: 0.95;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .poster-description.style-centered {
             line-height: 1.8;
-            opacity: 0.85;
+            opacity: 0.95;
             text-align: center;
             padding: 0 2rem;
         }
@@ -1598,6 +1644,38 @@
             box-shadow: var(--shadow-strong);
         }
 
+        /* 优雅智能文字颜色系统 - 根据背景主色调设计最优字体颜色 */
+        .poster.gradient-1 { color: #f8fafc; } /* 紫色系 - 浅色文字 */
+        .poster.gradient-2 { color: #1a202c; } /* 粉红黄色系 - 深色文字 */
+        .poster.gradient-3 { color: #1a365d; } /* 蓝色系 - 深蓝文字 */
+        .poster.gradient-4 { color: #2d3748; } /* 浅蓝粉红系 - 深灰文字 */
+        .poster.gradient-5 { color: #f8fafc; } /* 圆锥渐变 - 浅色文字 */
+        .poster.gradient-6 { color: #f8fafc; } /* 径向渐变 - 浅色文字 */
+        .poster.gradient-7 { color: #e2e8f0; } /* 深蓝渐变 - 浅灰文字 */
+        .poster.gradient-8 { color: #1a202c; } /* 多彩渐变 - 深色文字 */
+        .poster.gradient-9 { color: #f8fafc; } /* 蓝绿渐变 - 浅色文字 */
+        .poster.gradient-10 { color: #2d3748; } /* 浅黄橙系 - 深灰文字 */
+        .poster.gradient-11 { color: #1a202c; } /* 绿蓝渐变 - 深色文字 */
+        .poster.gradient-12 { color: #1a202c; } /* 黄绿渐变 - 深色文字 */
+        .poster.gradient-13 { color: #2d3748; } /* 粉紫渐变 - 深灰文字 */
+        .poster.gradient-14 { color: #2d3748; } /* 粉橙渐变 - 深灰文字 */
+        .poster.gradient-15 { color: #f8fafc; } /* 紫渐变 - 浅色文字 */
+        .poster.gradient-16 { color: #f8fafc; } /* 粉红渐变 - 浅色文字 */
+        .poster.gradient-17 { color: #1a202c; } /* 绿渐变 - 深色文字 */
+        .poster.gradient-18 { color: #f8fafc; } /* 蓝紫渐变 - 浅色文字 */
+        .poster.gradient-19 { color: #2d3748; } /* 绿紫渐变 - 深灰文字 */
+        .poster.gradient-20 { color: #2d3748; } /* 粉黄渐变 - 深灰文字 */
+        .poster.gradient-21 { color: #1a202c; } /* 蓝渐变 - 深色文字 */
+        .poster.gradient-22 { color: #1a202c; } /* 黄橙渐变 - 深色文字 */
+        .poster.gradient-23 { color: #2d3748; } /* 粉红渐变 - 深灰文字 */
+        .poster.gradient-24 { color: #2d3748; } /* 紫渐变 - 深灰文字 */
+        .poster.gradient-25 { color: #1a202c; } /* 多彩渐变 - 深色文字 */
+        .poster.gradient-26 { color: #1a202c; } /* 橙红渐变 - 深色文字 */
+        .poster.gradient-27 { color: #2d3748; } /* 粉紫渐变 - 深灰文字 */
+        .poster.gradient-28 { color: #1a202c; } /* 多彩渐变 - 深色文字 */
+        .poster.gradient-29 { color: #1a202c; } /* 多彩渐变 - 深色文字 */
+        .poster.gradient-30 { color: #1a202c; } /* 多彩渐变 - 深色文字 */
+
         .poster.rounded {
             border-radius: 20px;
         }
@@ -1623,12 +1701,74 @@
             display: none;
         }
 
-        .poster-title {
+        /* 优雅的文字阴影和渐变效果 */
+        .poster .poster-title {
             font-family: var(--font-title);
             font-size: 3rem;
             font-weight: 700;
             line-height: 1.2;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .poster .poster-subtitle {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 500;
+            line-height: 1.4;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+
+        .poster .poster-description {
+            font-family: var(--font-body);
+            font-size: 1rem;
+            line-height: 1.6;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .poster .poster-info {
+            text-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        }
+
+        .poster .poster-qr-text {
+            text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .poster .poster-guest-name {
+            text-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+
+        .poster .poster-guest-title {
+            text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
+
+        .poster .poster-guest-bio {
+            text-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        }
+
+        /* 针对浅色背景的文字阴影优化 */
+        .poster.gradient-2 .poster-title,
+        .poster.gradient-3 .poster-title,
+        .poster.gradient-4 .poster-title,
+        .poster.gradient-8 .poster-title,
+        .poster.gradient-10 .poster-title,
+        .poster.gradient-11 .poster-title,
+        .poster.gradient-12 .poster-title,
+        .poster.gradient-13 .poster-title,
+        .poster.gradient-14 .poster-title,
+        .poster.gradient-17 .poster-title,
+        .poster.gradient-19 .poster-title,
+        .poster.gradient-20 .poster-title,
+        .poster.gradient-21 .poster-title,
+        .poster.gradient-22 .poster-title,
+        .poster.gradient-23 .poster-title,
+        .poster.gradient-24 .poster-title,
+        .poster.gradient-25 .poster-title,
+        .poster.gradient-26 .poster-title,
+        .poster.gradient-27 .poster-title,
+        .poster.gradient-28 .poster-title,
+        .poster.gradient-29 .poster-title,
+        .poster.gradient-30 .poster-title {
+            text-shadow: 0 1px 3px rgba(255,255,255,0.3);
         }
 
         .poster-subtitle {
@@ -1643,7 +1783,7 @@
         .poster-description {
             font-size: 1rem;
             line-height: 1.8;
-            opacity: 0.85;
+            opacity: 0.95;
         }
 
         .poster-cover-image {
@@ -1723,7 +1863,7 @@
 
         .poster-guest.with-title .poster-guest-title {
             font-size: 0.9rem;
-            opacity: 0.85;
+            opacity: 0.9;
             font-weight: 400;
         }
 
@@ -1761,9 +1901,9 @@
             flex: 1;
             font-size: 0.85rem;
             line-height: 1.6;
-            opacity: 0.8;
+            opacity: 0.9;
             padding-left: 1rem;
-            border-left: 1px solid rgba(255,255,255,0.2);
+            border-left: 1px solid currentColor;
             margin-left: 0.5rem;
             white-space: pre-wrap;
             word-wrap: break-word;
@@ -1797,7 +1937,8 @@
         }
 
         .poster-guest.with-bio-long .poster-guest-bio {
-            border-left: 1px solid rgba(255,255,255,0.2);
+            border-left: 1px solid currentColor;
+            opacity: 0.9;
             border-top: none;
             padding-left: 1rem;
             padding-top: 0;
@@ -1839,8 +1980,8 @@
         }
 
         .poster-guest.layout-minimal .poster-guest-avatar {
-            width: 50px;
-            height: 50px;
+            width: 80px;
+            height: 80px;
             background: transparent;
             border: 2px solid rgba(255,255,255,0.5);
         }
@@ -1858,11 +1999,12 @@
 
         .poster-guest.layout-minimal.with-title .poster-guest-title {
             font-size: 0.8rem;
-            opacity: 0.7;
+            opacity: 0.9;
         }
 
         .poster-guest.layout-minimal.with-bio .poster-guest-bio {
-            border-left-color: rgba(255,255,255,0.15);
+            border-left-color: currentColor;
+            opacity: 0.9;
             font-size: 0.8rem;
         }
 
@@ -1888,10 +2030,6 @@
             letter-spacing: 0.08em;
         }
 
-        .poster-guest.layout-text.with-title {
-            align-items: center;
-        }
-
         .poster-guest.layout-text.with-title .poster-guest-info {
             gap: 0.35rem;
         }
@@ -1903,20 +2041,26 @@
 
         .poster-guest.layout-text.with-title .poster-guest-title {
             font-size: 1rem;
-            opacity: 0.8;
+            opacity: 0.9;
             font-weight: 400;
         }
 
-        .poster-guest.layout-text.with-bio {
+        .poster-guest.layout-text.with-bio,
+        .poster-guest.layout-text.with-title {
             flex-direction: row;
-            align-items: center;
             gap: 1.5rem;
         }
 
-        .poster-guest.layout-text.with-bio .poster-guest-left {
+        .poster-guest.layout-text.with-bio .poster-guest-left,
+        .poster-guest.layout-text.with-title .poster-guest-info {
             flex-shrink: 0;
-            width: auto;
             min-width: 120px;
+            width: auto;
+            margin-left: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
         }
 
         .poster-guest.layout-text.with-bio .poster-guest-info {
@@ -1930,16 +2074,28 @@
 
         .poster-guest.layout-text.with-bio .poster-guest-title {
             font-size: 0.9rem;
-            opacity: 0.75;
+            opacity: 0.9;
         }
 
         .poster-guest.layout-text.with-bio .poster-guest-bio {
             flex: 1;
-            border-left: 1px solid rgba(255,255,255,0.25);
-            padding-left: 1.25rem;
+            border-left: 1px solid currentColor;
+            opacity: 0.9;
+            padding-left: 0.75rem;
             margin-left: 0;
             font-size: 0.9rem;
             line-height: 1.6;
+        }
+
+        .poster-guest.layout-text.with-title .poster-guest-name {
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .poster-guest.layout-text.with-title .poster-guest-title {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 400;
         }
 
         /* ===== 第五种布局：侧边布局 (sidebar) ===== */
@@ -1949,13 +2105,14 @@
             gap: 1.5rem;
             padding: 1.5rem;
             background: rgba(255,255,255,0.12);
-            border-left: 4px solid rgba(255,255,255,0.3);
+            border-left: 4px solid currentColor;
+            opacity: 0.9;
             border-radius: 0 10px 10px 0;
         }
 
         .poster-guest.layout-sidebar .poster-guest-avatar {
-            width: 85px;
-            height: 85px;
+            width: 80px;
+            height: 80px;
             border-radius: 12px;
             background: rgba(255,255,255,0.25);
             border: 2px solid rgba(255,255,255,0.3);
@@ -1984,7 +2141,7 @@
 
         .poster-guest.layout-sidebar.with-title .poster-guest-title {
             font-size: 0.95rem;
-            opacity: 0.85;
+            opacity: 0.9;
         }
 
         .poster-guest.layout-sidebar.with-bio {
@@ -2013,7 +2170,8 @@
         }
 
         .poster-guest.layout-sidebar.with-bio .poster-guest-bio {
-            border-left: 1px solid rgba(255,255,255,0.3);
+            border-left: 1px solid currentColor;
+            opacity: 0.9;
             padding-left: 1rem;
             margin-left: 0.5rem;
             font-size: 0.85rem;
@@ -2022,9 +2180,9 @@
 
         /* ===== 第六种布局：网格布局 (grid) ===== */
         .poster-guest.layout-grid {
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            text-align: center;
+            text-align: left;
             padding-top: 1.25rem;
             padding-bottom: 1.25rem;
             padding-left: 1.25rem;
@@ -2035,31 +2193,38 @@
         }
 
         .poster-guest.layout-grid .poster-guest-avatar {
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
             background: rgba(255,255,255,0.2);
-            margin-bottom: 0.75rem;
+            margin-bottom: 0;
+            margin-right: 1rem;
             border: 2px solid rgba(255,255,255,0.25);
         }
 
         .poster-guest.layout-grid.with-bio .poster-guest-avatar {
             width: 100px;
-            height: 100px;
+            height: 130px;
+            border-radius: 8px;
             flex-shrink: 0;
+            overflow: hidden;
         }
 
         .poster-guest.layout-grid.name-only {
+            padding-top: 1.25rem;
             padding-left: 1.25rem;
+            flex-direction: row;
         }
 
         .poster-guest.layout-grid.name-only .poster-guest-name {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 600;
         }
 
         .poster-guest.layout-grid.with-title {
+            padding-top: 1.25rem;
             padding-left: 1.25rem;
+            flex-direction: row;
         }
 
         .poster-guest.layout-grid.with-title .poster-guest-info {
@@ -2069,20 +2234,22 @@
         }
 
         .poster-guest.layout-grid.with-title .poster-guest-name {
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             font-weight: 600;
         }
 
         .poster-guest.layout-grid.with-title .poster-guest-title {
-            font-size: 0.9rem;
-            opacity: 0.8;
+            font-size: 1rem;
+            opacity: 0.9;
         }
 
         .poster-guest.layout-grid.with-bio {
             flex-direction: column;
             align-items: stretch;
             padding-top: 1.25rem;
+            padding-bottom: 1.25rem;
             padding-left: 1.25rem;
+            padding-right: 1.25rem;
             text-align: left;
         }
 
@@ -2092,8 +2259,7 @@
             align-items: center;
             gap: 2rem;
             margin-top: 0;
-            margin-bottom: 1.5rem;
-            padding: 0;
+            margin-bottom: 0;
             padding-left: 1.5rem;
         }
 
@@ -2116,10 +2282,10 @@
             text-align: left;
             font-size: 0.85rem;
             line-height: 1.6;
-            opacity: 0.75;
-            width: calc(100% - 3rem);
-            padding: 1.5rem 1.5rem 1rem 1.5rem;
-            margin: 1.5rem auto 0;
+            opacity: 0.9;
+            width: 100%;
+            padding: 1.5rem 1.5rem 1.5rem 1.5rem;
+            margin: 0 auto 0;
             position: relative;
             border-left: none;
         }
@@ -2131,14 +2297,17 @@
             top: 0;
             right: 0;
             height: 2px;
-            background: rgba(255,255,255,0.4);
+            background: currentColor;
+            opacity: 0.4;
         }
 
         .poster-guest-avatar {
-            width: 70px;
-            height: 70px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             background: rgba(255,255,255,0.3);
+            border: 2px solid rgba(255,255,255,0.25);
+            background-color: rgba(255,255,255,0.1);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2152,7 +2321,9 @@
         .poster-guest-avatar img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: cover;  /* 使用 cover 填满容器 */
+            object-position: center;
+            display: block;
             position: absolute;
             top: 0;
             left: 0;
@@ -2165,16 +2336,22 @@
         .poster-guest-name {
             font-weight: 600;
             margin-bottom: 0.25rem;
+            white-space: nowrap;  /* 防止姓名换行 */
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .poster-guest-title {
             font-size: 0.85rem;
-            opacity: 0.8;
+            opacity: 0.9;
+            white-space: nowrap;  /* 防止头衔换行 */
+            overflow: hidden;
+            text-overflow: ellipsis;  /* 如果太长显示省略号 */
         }
 
         .poster-guest-bio {
             font-size: 0.8rem;
-            opacity: 0.7;
+            opacity: 0.9;
             margin-top: 0.25rem;
         }
 
@@ -2240,13 +2417,14 @@
         }
 
         .poster-qr-text h3 {
-            font-size: 1rem;
+            font-size: 1.1rem;
             margin-bottom: 0.25rem;
+            font-weight: 600;
         }
 
         .poster-qr-text p {
-            font-size: 0.8rem;
-            opacity: 0.7;
+            font-size: 0.9rem;
+            opacity: 0.9;
         }
 
         /* 二维码样式选择器 */
@@ -2282,32 +2460,32 @@
         /* 二维码组件样式变体 */
         .qr-wrapper-default {
             display: flex;
-            align-items: flex-start;
-            gap: 1.5rem;
+            align-items: center;
+            gap: 1rem;
         }
 
         .poster-qr.style-default {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 0.3rem;
+            gap: 0.4rem;
             background: white;
-            padding: 0.8rem;
+            padding: 0.4rem;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             flex-shrink: 0;
         }
 
         .poster-qr.style-default img {
-            width: 70px;
-            height: 70px;
+            width: 80px;
+            height: 80px;
         }
 
         .poster-info-group-right {
             display: flex;
             flex-direction: column;
             gap: 0.4rem;
-            padding-top: 1rem;
+            justify-content: center;
         }
 
         .poster-info-group-right .poster-info {
@@ -2329,7 +2507,7 @@
             border-radius: 16px;
             padding: 1.2rem 1.5rem;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
+            color: currentColor;
         }
 
         .qr-section-left {
@@ -2337,11 +2515,11 @@
         }
 
         .poster-qr.style-minimal img {
-            width: 80px;
-            height: 80px;
+            width: 90px;
+            height: 90px;
             border-radius: 8px;
             background: white;
-            padding: 6px;
+            padding: 4px;
         }
 
         .qr-section-right {
@@ -2351,7 +2529,8 @@
         }
 
         .poster-qr.style-minimal .event-detail {
-            color: rgba(255, 255, 255, 0.9);
+            color: currentColor;
+            opacity: 0.9;
         }
 
         .poster-qr.style-card {
@@ -2360,23 +2539,23 @@
             align-items: center;
             background: white;
             border-radius: 16px;
-            padding: 1.5rem;
+            padding: 1.2rem;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            gap: 1.5rem;
+            gap: 1.2rem;
         }
 
         .poster-qr.style-card img {
-            width: 70px;
-            height: 70px;
+            width: 85px;
+            height: 85px;
             border-radius: 0;
         }
 
         .poster-qr.style-card .poster-event-details {
-            font-size: 0.85rem;
+            font-size: 0.95rem;
         }
 
         .poster-qr.style-card .event-detail {
-            font-size: 0.85rem;
+            font-size: 0.95rem;
         }
 
         .poster-qr.style-card .event-detail svg {
@@ -2397,7 +2576,7 @@
             align-items: center;
             background: white;
             border-radius: 12px;
-            padding: 0.6rem;
+            padding: 0.5rem;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
@@ -2410,7 +2589,7 @@
 
         .horizontal-info .poster-info {
             justify-content: center;
-            font-size: 0.85rem;
+            font-size: 0.95rem;
         }
 
         .horizontal-info .poster-info svg {
@@ -2419,8 +2598,8 @@
         }
 
         .poster-qr.style-horizontal img {
-            width: 70px;
-            height: 70px;
+            width: 80px;
+            height: 80px;
         }
 
         .poster-qr.style-elegant {
@@ -2431,18 +2610,18 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 16px;
-            padding: 1.5rem;
+            padding: 1.2rem;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            color: rgba(255, 255, 255, 0.95);
-            gap: 1.5rem;
+            color: currentColor;
+            gap: 1.2rem;
         }
 
         .poster-qr.style-elegant img {
-            width: 70px;
-            height: 70px;
+            width: 85px;
+            height: 85px;
             border-radius: 12px;
             background: white;
-            padding: 6px;
+            padding: 4px;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
         }
 
@@ -2453,8 +2632,9 @@
         }
 
         .poster-qr.style-elegant .event-detail {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 0.85rem;
+            color: currentColor;
+            opacity: 0.9;
+            font-size: 0.95rem;
         }
 
         .poster-qr.style-elegant .event-detail svg {
@@ -2519,8 +2699,9 @@
             display: flex;
             align-items: center;
             gap: 0.4rem;
-            font-size: 0.75rem;
+            font-size: 0.95rem;
             color: #333;
+            font-weight: 500;
         }
 
         .event-detail svg {
@@ -2566,7 +2747,7 @@
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="18 15 12 9 6 15"/>
                         </svg>
-                        <span>全部展开</span>
+                        <span>全部收起</span>
                     </button>
                     <button type="button" class="control-btn compact" id="setCornerBtn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2994,6 +3175,15 @@
                                 </label>
                             `}
                         </div>
+                        
+                        <div class="form-divider" style="margin: 1rem 0;"></div>
+                        
+                        <label class="form-label">或输入图片链接</label>
+                        <div class="image-link-input-group">
+                            <input type="text" class="form-input component-image-link-input" placeholder="https://example.com/image.jpg" data-field="image" data-field-type="link" id="image-link-${data.id}">
+                            <button type="button" class="image-link-btn component-image-link-btn" data-component-id="${data.id}">确认</button>
+                        </div>
+                        
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.75rem;">
                             <label class="form-label" style="margin-bottom: 0;">图片样式</label>
                             <div class="image-style-selector component-image-style" data-field="style">
@@ -3239,6 +3429,38 @@
                         // 重新渲染组件以更新UI
                         renderComponent(compData);
                         updatePoster();
+                    }
+                });
+            }
+
+            // 图片链接输入事件
+            const imageLinkBtn = component.querySelector('.component-image-link-btn');
+            const imageLinkInput = component.querySelector('.component-image-link-input');
+            if (imageLinkBtn && imageLinkInput) {
+                imageLinkBtn.addEventListener('click', () => {
+                    const imageUrl = imageLinkInput.value.trim();
+                    if (imageUrl) {
+                        // 验证URL格式
+                        if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:')) {
+                            const compData = posterComponents.find(c => c.id == componentId);
+                            if (compData) {
+                                compData.data.image = imageUrl;
+                                // 重新渲染组件以更新UI
+                                renderComponent(compData);
+                                updatePoster();
+                            }
+                        } else {
+                            alert('请输入有效的图片链接，格式为 http:// 或 https:// 开头');
+                        }
+                    } else {
+                        alert('请输入图片链接');
+                    }
+                });
+
+                // 支持回车键确认
+                imageLinkInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        imageLinkBtn.click();
                     }
                 });
             }
@@ -4171,7 +4393,8 @@
 
                                 let avatarContent;
                                 if (photoPreviewImg && photoPreviewImg.src) {
-                                    avatarContent = `<img src="${photoPreviewImg.src}" alt="${name || ''}" style="transform: translate(${photoTransform.offsetX}px, ${photoTransform.offsetY}px) scale(${photoTransform.scale}); transform-origin: center center; transition: transform 0.2s ease;" crossorigin="anonymous">`;
+                                    // 应用变换时保持图片比例，强制设置object-fit: cover
+                                    avatarContent = `<img src="${photoPreviewImg.src}" alt="${name || ''}" style="width: 100%; height: 100%; object-fit: cover; object-position: center; transform: translate(${photoTransform.offsetX}px, ${photoTransform.offsetY}px) scale(${photoTransform.scale}); transform-origin: center center;" crossorigin="anonymous">`;
                                 } else {
                                     avatarContent = defaultAvatar;
                                 }
@@ -4240,13 +4463,32 @@
             console.log('海报更新完成，当前有', posterComponents.filter(c => c.visible).length, '个可见组件');
         };
 
+        // 优雅背景切换函数
+        const applyElegantTextColor = (gradientIndex) => {
+            const poster = document.getElementById('poster');
+            
+            // 移除所有之前的文字颜色类
+            for (let i = 1; i <= 30; i++) {
+                poster.classList.remove(`gradient-${i}`);
+            }
+            
+            // 应用新的文字颜色类
+            poster.classList.add(`gradient-${gradientIndex}`);
+        };
+
         // 背景渐变切换
         document.querySelectorAll('.gradient-option').forEach(option => {
             option.addEventListener('click', function() {
                 document.querySelectorAll('.gradient-option').forEach(o => o.classList.remove('active'));
                 this.classList.add('active');
                 const gradient = this.dataset.gradient;
-                document.getElementById('poster').style.background = `var(--gradient-${gradient})`;
+                const poster = document.getElementById('poster');
+                
+                // 设置背景
+                poster.style.background = `var(--gradient-${gradient})`;
+                
+                // 应用优雅的文字颜色
+                applyElegantTextColor(gradient);
             });
         });
 
@@ -4285,51 +4527,22 @@
                             exportBtn.disabled = true;
                             exportBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg><span>导出中...</span>';
                             
-                            const canvas = await html2canvas(poster, {
-                                scale: 2,
-                                useCORS: true,
-                                allowTaint: true,
+                            // 获取海报原始尺寸
+                            const posterRect = poster.getBoundingClientRect();
+                            const targetWidth = 1200;
+                            const pixelRatio = targetWidth / posterRect.width;
+                            
+                            // 使用 html-to-image 库，更好地支持 CSS
+                            const dataUrl = await htmlToImage.toPng(poster, {
+                                quality: 1.0,
                                 backgroundColor: '#ffffff',
-                                logging: true,
-                                ignoreElements: function(element) {
-                                    // 忽略隐藏或不可见元素
-                                    return element.style.display === 'none' || 
-                                           element.style.visibility === 'hidden' ||
-                                           element.style.opacity === '0';
-                                },
-                                onclone: function(clonedDoc) {
-                                    // 确保克隆的文档中所有样式都正确
-                                    const clonedPoster = clonedDoc.getElementById('poster');
-                                    if (clonedPoster) {
-                                        clonedPoster.style.display = 'block';
-                                        clonedPoster.style.visibility = 'visible';
-                                        clonedPoster.style.opacity = '1';
-                                        clonedPoster.style.position = 'relative';
-                                        clonedPoster.style.zIndex = '1';
-                                        
-                                        // 确保所有图片都加载完成
-                                        const images = clonedPoster.querySelectorAll('img');
-                                        images.forEach(img => {
-                                            if (!img.complete) {
-                                                img.onload = function() {
-                                                    console.log('图片加载完成:', img.src);
-                                                };
-                                            }
-                                        });
-                                    }
-                                }
+                                pixelRatio: pixelRatio,  // 设置像素比以获得高分辨率
+                                skipFonts: true  // 跳过字体加载检查，加快速度
                             });
-
-                            // 确保画布已完全生成
-                            if (!canvas || canvas.width === 0 || canvas.height === 0) {
-                                throw new Error('Canvas generation failed');
-                            }
-
-                            console.log('画布生成成功，尺寸:', canvas.width, 'x', canvas.height);
 
                             const link = document.createElement('a');
                             link.download = 'poster.png';
-                            link.href = canvas.toDataURL('image/png', 1.0);
+                            link.href = dataUrl;
                             
                             // 触发下载
                             document.body.appendChild(link);

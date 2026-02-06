@@ -1,0 +1,31 @@
+{
+  "$schema": "https://opencode.ai/schema.json",
+  "name": "tuo-yue-toolbox",
+  "description": "海报生成器工具箱",
+  "providers": {
+    "openai": {
+      "apiKey": "YOUR_OPENAI_API_KEY_HERE"
+    },
+    "anthropic": {
+      "apiKey": "YOUR_CLAUDE_API_KEY_HERE"
+    },
+    "gemini": {
+      "apiKey": "YOUR_GEMINI_API_KEY_HERE"
+    }
+  },
+  "models": {
+    "default": "gpt-4o-mini",
+    "coding": "gpt-4o",
+    "chat": "claude-3-5-sonnet-20241022"
+  },
+  "features": {
+    "autoSave": true,
+    "syntaxHighlighting": true,
+    "autoComplete": true
+  },
+  "project": {
+    "type": "web",
+    "framework": "vanilla",
+    "language": "javascript"
+  }
+}
