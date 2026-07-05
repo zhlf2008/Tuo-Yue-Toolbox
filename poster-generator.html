@@ -878,6 +878,48 @@
             color: #667eea;
         }
 
+        /* 人员组和人员块拖拽样式 */
+        .personnel-group.dragging,
+        .guest-block.dragging {
+            opacity: 0.5;
+            border: 2px dashed #667eea;
+        }
+
+        .personnel-group.drag-over {
+            border-top: 3px solid #667eea;
+        }
+
+        .guest-block.drag-over {
+            outline: 2px dashed #667eea;
+            outline-offset: 2px;
+        }
+
+        .personnel-group-drag-handle,
+        .guest-block-drag-handle {
+            color: #94a3b8;
+            cursor: move;
+            padding: 0.25rem;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .personnel-group-drag-handle:hover,
+        .guest-block-drag-handle:hover {
+            color: #667eea;
+        }
+
+        .guest-block-header {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .guest-block-header .guest-remove-btn {
+            margin-left: auto;
+        }
+
         .component-title {
             flex: 1;
             font-size: 0.85rem;
@@ -2943,6 +2985,7 @@
         // 人员组数据（嵌套在人员组件中）
         let personnelGroups = [];
         let groupCounter = 0;
+        let personCounterGlobal = 0;
 
         // 组件类型定义
         const componentTypes = {
@@ -3637,6 +3680,13 @@
             group.dataset.groupId = groupId;
             group.innerHTML = `
                 <div class="personnel-group-header">
+                    <div class="personnel-group-drag-handle" title="拖动排序">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="8" y1="6" x2="16" y2="6"/>
+                            <line x1="8" y1="12" x2="16" y2="12"/>
+                            <line x1="8" y1="18" x2="16" y2="18"/>
+                        </svg>
+                    </div>
                     <input type="text" class="personnel-group-title-input" value="${groupData.title}">
                     <div class="personnel-group-toggle">
                         <span>显示</span>
@@ -3670,13 +3720,33 @@
 
         // 创建组内人员
         const createPersonInGroup = (container, groupId, data = {}) => {
-            let personCounter = 0;
-            const personId = ++personCounter;
+            const personId = ++personCounterGlobal;
             
             const personBlock = document.createElement('div');
             personBlock.className = 'guest-block';
             personBlock.dataset.groupId = groupId;
             personBlock.dataset.personId = personId;
+
+            // 同步到组数据数组
+            const groupData = personnelGroups.find(g => g.id == groupId);
+            if (groupData) {
+                const existing = groupData.persons.find(p => p.id === personId);
+                if (!existing) {
+                    // 尝试找到没有id的条目（初始创建时）
+                    const noId = groupData.persons.find(p => p.id === undefined);
+                    if (noId) {
+                        noId.id = personId;
+                    } else {
+                        groupData.persons.push({
+                            id: personId,
+                            name: data.name || '',
+                            title: data.title || '',
+                            bio: data.bio || ''
+                        });
+                    }
+                }
+            }
+
             personBlock.innerHTML = `
                 <div class="guest-block-grid">
                     <div class="guest-photo-area">
@@ -3776,7 +3846,16 @@
                         </div>
                     </div>
                     <div class="guest-info-area">
-                        <button type="button" class="guest-remove-btn">×</button>
+                        <div class="guest-block-header">
+                            <div class="guest-block-drag-handle" title="拖动排序">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="8" y1="6" x2="16" y2="6"/>
+                                    <line x1="8" y1="12" x2="16" y2="12"/>
+                                    <line x1="8" y1="18" x2="16" y2="18"/>
+                                </svg>
+                            </div>
+                            <button type="button" class="guest-remove-btn">×</button>
+                        </div>
                         <div class="guest-name-wrapper">
                             <label>姓名</label>
                             <input type="text" class="form-input guest-name" value="${data.name || ''}" placeholder="姓名">
@@ -3852,6 +3931,72 @@
                 const personsContainer = group.querySelector('.personnel-group-persons');
                 createPersonInGroup(personsContainer, groupId);
                 updatePoster();
+            });
+
+            // 人员组拖拽排序
+            const groupDragHandle = group.querySelector('.personnel-group-drag-handle');
+            groupDragHandle.addEventListener('mousedown', () => {
+                group.setAttribute('draggable', 'true');
+            });
+            groupDragHandle.addEventListener('mouseup', () => {
+                group.setAttribute('draggable', 'false');
+            });
+            groupDragHandle.addEventListener('mouseleave', () => {
+                group.setAttribute('draggable', 'false');
+            });
+            group.setAttribute('draggable', 'false');
+
+            group.addEventListener('dragstart', (e) => {
+                group.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', groupId);
+            });
+
+            group.addEventListener('dragend', () => {
+                group.classList.remove('dragging');
+                group.setAttribute('draggable', 'false');
+                document.querySelectorAll('.personnel-group').forEach(g => g.classList.remove('drag-over'));
+            });
+
+            group.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const dragging = document.querySelector('.personnel-group.dragging');
+                if (dragging && dragging !== group) {
+                    group.classList.add('drag-over');
+                }
+            });
+
+            group.addEventListener('dragleave', () => {
+                group.classList.remove('drag-over');
+            });
+
+            group.addEventListener('drop', (e) => {
+                e.preventDefault();
+                group.classList.remove('drag-over');
+                const draggedId = parseInt(e.dataTransfer.getData('text/plain'));
+                const dropTargetId = parseInt(groupId);
+
+                if (draggedId !== dropTargetId) {
+                    const draggedIndex = personnelGroups.findIndex(g => g.id === draggedId);
+                    const dropIndex = personnelGroups.findIndex(g => g.id === dropTargetId);
+
+                    const [removed] = personnelGroups.splice(draggedIndex, 1);
+                    personnelGroups.splice(dropIndex, 0, removed);
+
+                    const allGroups = Array.from(document.querySelectorAll('.personnel-group'));
+                    const draggedEl = allGroups.find(g => g.dataset.groupId == draggedId);
+                    const dropEl = allGroups.find(g => g.dataset.groupId == dropTargetId);
+
+                    if (draggedEl && dropEl) {
+                        const wrapper = draggedEl.parentElement;
+                        if (draggedIndex < dropIndex) {
+                            wrapper.insertBefore(draggedEl, dropEl.nextSibling);
+                        } else {
+                            wrapper.insertBefore(draggedEl, dropEl);
+                        }
+                    }
+
+                    updatePoster();
+                }
             });
         };
 
@@ -3967,6 +4112,10 @@
                 const personsContainer = block.parentElement;
                 const persons = personsContainer.querySelectorAll('.guest-block');
                 if (persons.length > 1) {
+                    const groupData = personnelGroups.find(g => g.id == groupId);
+                    if (groupData) {
+                        groupData.persons = groupData.persons.filter(p => p.id != personId);
+                    }
                     block.remove();
                     updatePoster();
                 } else {
@@ -3981,6 +4130,80 @@
                         updatePoster();
                     });
                 });
+            });
+
+            // 人员块拖拽排序
+            const blockDragHandle = block.querySelector('.guest-block-drag-handle');
+            blockDragHandle.addEventListener('mousedown', () => {
+                block.setAttribute('draggable', 'true');
+            });
+            blockDragHandle.addEventListener('mouseup', () => {
+                block.setAttribute('draggable', 'false');
+            });
+            blockDragHandle.addEventListener('mouseleave', () => {
+                block.setAttribute('draggable', 'false');
+            });
+            block.setAttribute('draggable', 'false');
+
+            block.addEventListener('dragstart', (e) => {
+                block.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', personId);
+            });
+
+            block.addEventListener('dragend', () => {
+                block.classList.remove('dragging');
+                block.setAttribute('draggable', 'false');
+                const personsContainer = block.parentElement;
+                if (personsContainer) {
+                    personsContainer.querySelectorAll('.guest-block').forEach(b => b.classList.remove('drag-over'));
+                }
+            });
+
+            block.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const dragging = document.querySelector('.guest-block.dragging');
+                if (dragging && dragging !== block) {
+                    block.classList.add('drag-over');
+                }
+            });
+
+            block.addEventListener('dragleave', () => {
+                block.classList.remove('drag-over');
+            });
+
+            block.addEventListener('drop', (e) => {
+                e.preventDefault();
+                block.classList.remove('drag-over');
+                const draggedPersonId = parseInt(e.dataTransfer.getData('text/plain'));
+                const dropPersonId = parseInt(personId);
+
+                if (draggedPersonId !== dropPersonId) {
+                    const groupData = personnelGroups.find(g => g.id == groupId);
+                    if (!groupData) return;
+
+                    const draggedIndex = groupData.persons.findIndex(p => p.id === draggedPersonId);
+                    const dropIndex = groupData.persons.findIndex(p => p.id === dropPersonId);
+
+                    if (draggedIndex === -1 || dropIndex === -1) return;
+
+                    const [removed] = groupData.persons.splice(draggedIndex, 1);
+                    groupData.persons.splice(dropIndex, 0, removed);
+
+                    const personsContainer = block.parentElement;
+                    const allBlocks = Array.from(personsContainer.querySelectorAll('.guest-block'));
+                    const draggedEl = allBlocks.find(b => parseInt(b.dataset.personId) === draggedPersonId);
+                    const dropEl = allBlocks.find(b => parseInt(b.dataset.personId) === dropPersonId);
+
+                    if (draggedEl && dropEl) {
+                        if (draggedIndex < dropIndex) {
+                            personsContainer.insertBefore(draggedEl, dropEl.nextSibling);
+                        } else {
+                            personsContainer.insertBefore(draggedEl, dropEl);
+                        }
+                    }
+
+                    updatePoster();
+                }
             });
         };
 
