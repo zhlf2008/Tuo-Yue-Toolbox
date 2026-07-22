@@ -2044,6 +2044,12 @@
             opacity: 0.9;
         }
 
+        .poster-guest.layout-minimal.with-title .poster-guest-info,
+        .poster-guest.layout-minimal.with-bio .poster-guest-info {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
         .poster-guest.layout-minimal.with-bio .poster-guest-bio {
             border-left-color: currentColor;
             opacity: 0.9;
@@ -2127,6 +2133,17 @@
             margin-left: 0;
             font-size: 0.9rem;
             line-height: 1.6;
+        }
+
+        .poster-guest.layout-text.bio-only {
+            display: block;
+        }
+
+        .poster-guest.layout-text.bio-only .poster-guest-bio {
+            width: 100%;
+            border-left: none;
+            padding-left: 0;
+            margin-left: 0;
         }
 
         .poster-guest.layout-text.with-title .poster-guest-name {
@@ -2303,6 +2320,11 @@
             margin-top: 0;
             margin-bottom: 0;
             padding-left: 1.5rem;
+        }
+
+        .poster-guest.layout-grid.no-photo.with-bio .poster-guest-left {
+            gap: 0;
+            padding-left: 0;
         }
 
         .poster-guest.layout-grid.with-bio .poster-guest-info {
@@ -4596,6 +4618,9 @@
                                 const title = block.querySelector('.guest-title').value;
                                 const bio = block.querySelector('.guest-bio').value;
                                 const photoPreviewImg = block.querySelector('.guest-photo-preview img');
+                                const layout = block.dataset.layout || 'compact';
+                                const hasPhoto = Boolean(photoPreviewImg && photoPreviewImg.src);
+                                const layoutClasses = `layout-${layout}${layout === 'grid' && !hasPhoto ? ' no-photo' : ''}`;
 
                                 const guestElement = document.createElement('div');
                                 guestElement.dataset.blockIndex = block.dataset.personId;
@@ -4615,7 +4640,7 @@
                                 </svg>`;
 
                                 let avatarContent;
-                                if (photoPreviewImg && photoPreviewImg.src) {
+                                if (hasPhoto) {
                                     // 应用变换时保持图片比例，强制设置object-fit: cover
                                     avatarContent = `<img src="${photoPreviewImg.src}" alt="${name || ''}" style="width: 100%; height: 100%; object-fit: cover; object-position: center; transform: translate(${photoTransform.offsetX}px, ${photoTransform.offsetY}px) scale(${photoTransform.scale}); transform-origin: center center;" crossorigin="anonymous">`;
                                 } else {
@@ -4626,20 +4651,27 @@
                                 const hasName = name && name.trim();
                                 const hasTitle = title && title.trim();
                                 const hasBio = bio && bio.trim();
-                                const layout = block.dataset.layout || 'compact';
+                                const avatarHtml = layout === 'grid' && !hasPhoto
+                                    ? ''
+                                    : `<div class="poster-guest-avatar">${avatarContent}</div>`;
 
-                                if (hasName && !hasTitle && !hasBio) {
-                                    guestElement.className = `poster-guest name-only layout-${layout}`;
+                                if (layout === 'text' && !hasName && !hasTitle) {
+                                    guestElement.className = `poster-guest with-bio bio-only ${layoutClasses}`;
+                                    guestElement.innerHTML = hasBio
+                                        ? `<div class="poster-guest-bio">${bio}</div>`
+                                        : '';
+                                } else if (hasName && !hasTitle && !hasBio) {
+                                    guestElement.className = `poster-guest name-only ${layoutClasses}`;
                                     guestElement.innerHTML = `
-                                        <div class="poster-guest-avatar">${avatarContent}</div>
+                                        ${avatarHtml}
                                         <div class="poster-guest-info">
                                             <div class="poster-guest-name">${name}</div>
                                         </div>
                                     `;
                                 } else if (hasName && hasTitle && !hasBio) {
-                                    guestElement.className = `poster-guest with-title layout-${layout}`;
+                                    guestElement.className = `poster-guest with-title ${layoutClasses}`;
                                     guestElement.innerHTML = `
-                                        <div class="poster-guest-avatar">${avatarContent}</div>
+                                        ${avatarHtml}
                                         <div class="poster-guest-info">
                                             <div class="poster-guest-name">${name}</div>
                                             <div class="poster-guest-title">${title}</div>
@@ -4648,10 +4680,10 @@
                                 } else {
                                     const displayTitle = hasTitle ? title : '';
                                     const displayBio = hasBio ? bio : '';
-                                    guestElement.className = `poster-guest with-bio layout-${layout}`;
+                                    guestElement.className = `poster-guest with-bio ${layoutClasses}`;
                                     guestElement.innerHTML = `
                                         <div class="poster-guest-left">
-                                            <div class="poster-guest-avatar">${avatarContent}</div>
+                                            ${avatarHtml}
                                             <div class="poster-guest-info">
                                                 <div class="poster-guest-name">${name || '嘉宾'}</div>
                                                 ${displayTitle ? `<div class="poster-guest-title">${displayTitle}</div>` : ''}
