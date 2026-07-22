@@ -1382,6 +1382,7 @@
 
         .personnel-group-title-input {
             flex: 1;
+            min-width: 0;
             padding: 0.5rem 0.75rem;
             border: 1px solid #e2e8f0;
             border-radius: 6px;
@@ -1403,6 +1404,7 @@
             gap: 0.5rem;
             font-size: 0.8rem;
             color: #64748b;
+            flex-shrink: 0;
         }
 
         .personnel-group-toggle-switch {
@@ -1413,6 +1415,7 @@
             position: relative;
             cursor: pointer;
             transition: background var(--transition-fast);
+            flex-shrink: 0;
         }
 
         .personnel-group-toggle-switch.active {
@@ -1452,6 +1455,7 @@
             box-shadow: 0 1px 3px rgba(239, 68, 68, 0.2);
             transition: all var(--transition-fast);
             line-height: 1;
+            flex-shrink: 0;
         }
 
         .personnel-group-remove:hover {
@@ -2946,6 +2950,72 @@
             background: #b42318;
         }
 
+        .wechat-export-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            display: none;
+            overflow-y: auto;
+            padding: max(1rem, env(safe-area-inset-top)) 1rem max(1.5rem, env(safe-area-inset-bottom));
+            background: rgba(15, 23, 42, 0.88);
+            overscroll-behavior: contain;
+        }
+
+        .wechat-export-modal.open {
+            display: block;
+        }
+
+        .wechat-export-dialog {
+            width: min(100%, 640px);
+            margin: 0 auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+        }
+
+        .wechat-export-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .wechat-export-title {
+            margin: 0;
+            color: #1e293b;
+            font-size: 1rem;
+        }
+
+        .wechat-export-close {
+            flex-shrink: 0;
+            min-width: 64px;
+            min-height: 40px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: white;
+            color: #475569;
+            font: inherit;
+            font-weight: 600;
+        }
+
+        .wechat-export-tip {
+            margin: 0 0 1rem;
+            color: #475569;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .wechat-export-image {
+            display: block;
+            width: 100%;
+            height: auto;
+            background: #f1f5f9;
+            -webkit-touch-callout: default;
+            user-select: auto;
+        }
+
         .app-icon {
             width: 18px;
             height: 18px;
@@ -3132,8 +3202,6 @@
             }
 
             .guest-photo-controls .photo-control-btn {
-                grid-column: auto !important;
-                grid-row: auto !important;
                 min-width: 0;
             }
 
@@ -3143,7 +3211,7 @@
 
             .personnel-group-header {
                 display: grid;
-                grid-template-columns: 44px minmax(0, 1fr) 44px;
+                grid-template-columns: 44px minmax(0, 1fr) 36px 44px;
                 gap: 0.5rem;
                 align-items: center;
             }
@@ -3163,7 +3231,7 @@
             }
 
             .personnel-group-title-input {
-                grid-column: 2 / 4;
+                grid-column: 2 / 5;
                 grid-row: 1;
                 width: 100%;
                 min-width: 0;
@@ -3171,14 +3239,15 @@
             }
 
             .personnel-group-toggle {
-                grid-column: 1 / 3;
+                grid-column: 3;
                 grid-row: 2;
                 min-height: 44px;
-                padding-left: 0.25rem;
+                padding: 0;
+                justify-self: center;
             }
 
             .personnel-group-remove {
-                grid-column: 3;
+                grid-column: 4;
                 grid-row: 2;
                 width: 44px;
                 height: 44px;
@@ -3300,13 +3369,13 @@
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="18 15 12 9 6 15"/>
                         </svg>
-                        <span>全部收起</span>
+                        <span>收起</span>
                     </button>
                     <button type="button" class="control-btn compact" id="setCornerBtn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                         </svg>
-                        <span>圆角</span>
+                        <span>直角</span>
                     </button>
                     <button type="button" class="export-btn compact" id="exportBtn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3314,7 +3383,7 @@
                             <polyline points="7 10 12 15 17 10"/>
                             <line x1="12" y1="15" x2="12" y2="3"/>
                         </svg>
-                        <span>导出海报</span>
+                        <span>导出</span>
                     </button>
                 </div>
             </div>
@@ -3456,7 +3525,7 @@
             <div class="poster-stage" id="posterStage">
                 <div class="poster-scale-frame" id="posterScaleFrame">
                     <div class="poster-scale-layer" id="posterScaleLayer">
-                        <div class="poster" id="poster">
+                        <div class="poster squared" id="poster">
                             <div class="poster-content">
                                 <div class="poster-title" id="posterTitle">年度设计大会</div>
                                 <div class="poster-subtitle" id="posterSubtitle">Annual Design Conference 2024</div>
@@ -3504,15 +3573,26 @@
     <div class="mobile-action-bar" aria-label="手机端主要操作">
         <button type="button" class="mobile-action-btn" id="mobileViewToggleBtn">
             <span class="app-icon app-icon-preview" aria-hidden="true"></span>
-            <span id="mobileViewToggleText">查看预览</span>
+            <span id="mobileViewToggleText">预览</span>
         </button>
         <button type="button" class="mobile-action-btn primary" id="mobileExportBtn">
             <span class="app-icon app-icon-download" aria-hidden="true"></span>
-            <span>导出海报</span>
+            <span>导出</span>
         </button>
     </div>
 
     <div class="export-status-toast" id="exportStatusToast" role="status" aria-live="polite"></div>
+
+    <div class="wechat-export-modal" id="wechatExportModal" role="dialog" aria-modal="true" aria-labelledby="wechatExportTitle" aria-hidden="true">
+        <div class="wechat-export-dialog">
+            <div class="wechat-export-header">
+                <h2 class="wechat-export-title" id="wechatExportTitle">保存海报</h2>
+                <button type="button" class="wechat-export-close" id="wechatExportClose">关闭</button>
+            </div>
+            <p class="wechat-export-tip">长按下方图片，选择“保存图片”即可保存到手机相册。</p>
+            <img class="wechat-export-image" id="wechatExportImage" alt="生成的海报图片">
+        </div>
+    </div>
 
     <script>
         // 组件数据
@@ -4317,8 +4397,7 @@
                     </div>
                     <input type="text" class="personnel-group-title-input" value="${groupData.title}">
                     <div class="personnel-group-toggle">
-                        <span>显示</span>
-                        <div class="personnel-group-toggle-switch ${groupData.visible ? 'active' : ''}" data-group-id="${groupId}"></div>
+                        <div class="personnel-group-toggle-switch ${groupData.visible ? 'active' : ''}" data-group-id="${groupId}" role="switch" aria-label="显示或隐藏人员组" aria-checked="${groupData.visible ? 'true' : 'false'}"></div>
                     </div>
                     <button type="button" class="personnel-group-remove" data-group-id="${groupId}" title="删除组">×</button>
                 </div>
@@ -4538,6 +4617,7 @@
             group.querySelector('.personnel-group-toggle-switch').addEventListener('click', () => {
                 const toggle = group.querySelector('.personnel-group-toggle-switch');
                 toggle.classList.toggle('active');
+                toggle.setAttribute('aria-checked', String(toggle.classList.contains('active')));
                 const groupData = personnelGroups.find(g => g.id == groupId);
                 if (groupData) {
                     groupData.visible = toggle.classList.contains('active');
@@ -4904,7 +4984,7 @@
         // 整体控制按钮
         const toggleAllComponentsBtn = document.getElementById('toggleAllComponentsBtn');
         const setCornerBtn = document.getElementById('setCornerBtn');
-        let posterRounded = true;
+        let posterRounded = false;
 
         // 更新全部展开/收起按钮状态
         const updateToggleAllButtonState = () => {
@@ -4914,7 +4994,7 @@
             });
 
             const btnContent = toggleAllComponentsBtn.querySelector('span');
-            btnContent.textContent = allCollapsed ? '全部展开' : '全部收起';
+            btnContent.textContent = allCollapsed ? '展开' : '收起';
         };
 
         toggleAllComponentsBtn.addEventListener('click', () => {
@@ -4943,7 +5023,7 @@
                 }
             });
 
-            btnContent.textContent = allCollapsed ? '全部收起' : '全部展开';
+            btnContent.textContent = allCollapsed ? '收起' : '展开';
         });
 
         setCornerBtn.addEventListener('click', () => {
@@ -5038,7 +5118,7 @@
 
             const toggleText = document.getElementById('mobileViewToggleText');
             const toggleIcon = document.querySelector('#mobileViewToggleBtn .app-icon');
-            if (toggleText) toggleText.textContent = view === 'editor' ? '查看预览' : '返回编辑';
+            if (toggleText) toggleText.textContent = view === 'editor' ? '预览' : '编辑';
             if (toggleIcon) {
                 toggleIcon.classList.toggle('app-icon-preview', view === 'editor');
                 toggleIcon.classList.toggle('app-icon-edit', view === 'preview');
@@ -5552,7 +5632,51 @@
                 const exportBtn = document.getElementById('exportBtn');
                 const mobileExportBtn = document.getElementById('mobileExportBtn');
                 const exportButtons = [exportBtn, mobileExportBtn].filter(Boolean);
+                const wechatExportModal = document.getElementById('wechatExportModal');
+                const wechatExportImage = document.getElementById('wechatExportImage');
+                const wechatExportClose = document.getElementById('wechatExportClose');
+                const isWeChatBrowser = /MicroMessenger/i.test(navigator.userAgent);
+                let wechatBodyOverflow = '';
                 let exportToastTimer = null;
+
+                const blobToDataUrl = blob => new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = () => reject(new Error('无法读取生成的图片'));
+                    reader.readAsDataURL(blob);
+                });
+
+                const closeWechatExport = () => {
+                    if (!wechatExportModal) return;
+                    wechatExportModal.classList.remove('open');
+                    wechatExportModal.setAttribute('aria-hidden', 'true');
+                    if (wechatExportImage) wechatExportImage.removeAttribute('src');
+                    document.body.style.overflow = wechatBodyOverflow;
+                };
+
+                const showWechatExport = async blob => {
+                    if (!wechatExportModal || !wechatExportImage) {
+                        throw new Error('微信保存界面未加载');
+                    }
+                    const imageDataUrl = await blobToDataUrl(blob);
+                    wechatBodyOverflow = document.body.style.overflow;
+                    wechatExportImage.src = imageDataUrl;
+                    wechatExportModal.classList.add('open');
+                    wechatExportModal.setAttribute('aria-hidden', 'false');
+                    document.body.style.overflow = 'hidden';
+                    wechatExportClose?.focus();
+                };
+
+                wechatExportClose?.addEventListener('click', closeWechatExport);
+                wechatExportModal?.addEventListener('click', event => {
+                    if (event.target === wechatExportModal) closeWechatExport();
+                });
+                document.addEventListener('keydown', event => {
+                    if (event.key === 'Escape' && wechatExportModal?.classList.contains('open')) {
+                        closeWechatExport();
+                    }
+                });
+
                 const showExportMessage = (message, isError = false) => {
                     const toast = document.getElementById('exportStatusToast');
                     if (!toast) return;
@@ -5569,8 +5693,8 @@
                     });
                     const desktopText = exportBtn?.querySelector('span');
                     const mobileText = mobileExportBtn?.querySelector('span:last-child');
-                    if (desktopText) desktopText.textContent = isExporting ? '导出中...' : '导出海报';
-                    if (mobileText) mobileText.textContent = isExporting ? '导出中...' : '导出海报';
+                    if (desktopText) desktopText.textContent = isExporting ? '生成' : '导出';
+                    if (mobileText) mobileText.textContent = isExporting ? '生成' : '导出';
                 };
 
                 if (exportBtn) {
@@ -5643,7 +5767,19 @@
 
                             let blob = await (await fetch(dataUrl)).blob();
                             if (renderedScale !== pixelRatio) {
-                                const bitmap = await createImageBitmap(blob);
+                                let bitmap;
+                                let bitmapObjectUrl;
+                                if (typeof createImageBitmap === 'function') {
+                                    bitmap = await createImageBitmap(blob);
+                                } else {
+                                    bitmapObjectUrl = URL.createObjectURL(blob);
+                                    bitmap = await new Promise((resolve, reject) => {
+                                        const image = new Image();
+                                        image.onload = () => resolve(image);
+                                        image.onerror = () => reject(new Error('无法缩放生成的图片'));
+                                        image.src = bitmapObjectUrl;
+                                    });
+                                }
                                 const exportCanvas = document.createElement('canvas');
                                 exportCanvas.width = targetWidth;
                                 exportCanvas.height = Math.ceil(naturalHeight * pixelRatio);
@@ -5651,24 +5787,30 @@
                                 context.imageSmoothingEnabled = true;
                                 context.imageSmoothingQuality = 'high';
                                 context.drawImage(bitmap, 0, 0, exportCanvas.width, exportCanvas.height);
-                                bitmap.close();
+                                bitmap.close?.();
+                                if (bitmapObjectUrl) URL.revokeObjectURL(bitmapObjectUrl);
                                 blob = await new Promise(resolve => exportCanvas.toBlob(resolve, 'image/png', 1));
                             }
                             if (!blob || !blob.size) throw new Error('生成的图片数据为空');
 
-                            const link = document.createElement('a');
-                            link.download = 'poster.png';
-                            const objectUrl = URL.createObjectURL(blob);
-                            link.href = objectUrl;
-                            
-                            // 触发下载
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+                            if (isWeChatBrowser) {
+                                await showWechatExport(blob);
+                                console.log('微信海报图片已生成');
+                                showExportMessage('图片已生成，请长按保存');
+                            } else {
+                                const link = document.createElement('a');
+                                link.download = 'poster.png';
+                                const objectUrl = URL.createObjectURL(blob);
+                                link.href = objectUrl;
 
-                            console.log('海报导出成功');
-                            showExportMessage(`海报导出成功：${targetWidth} × ${Math.ceil(naturalHeight * pixelRatio)}`);
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+
+                                console.log('海报导出成功');
+                                showExportMessage(`海报导出成功：${targetWidth} × ${Math.ceil(naturalHeight * pixelRatio)}`);
+                            }
                         } catch (error) {
                             showExportMessage('导出失败：' + (error.message || '请检查网络连接后重试'), true);
                             console.error('Export error:', error);
