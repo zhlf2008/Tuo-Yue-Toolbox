@@ -61,6 +61,15 @@
             box-sizing: border-box;
         }
 
+        button:focus-visible,
+        a:focus-visible,
+        input:focus-visible,
+        textarea:focus-visible,
+        select:focus-visible {
+            outline: 3px solid rgba(79, 70, 229, 0.45);
+            outline-offset: 2px;
+        }
+
         body {
             font-family: var(--font-body);
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -96,11 +105,11 @@
 
         .container {
             display: grid;
-            grid-template-columns: 500px 1fr;
-            gap: 3rem;
+            grid-template-columns: minmax(420px, 500px) minmax(0, 1fr);
+            gap: 2rem;
             max-width: 1800px;
             margin: 0 auto;
-            padding: 3rem;
+            padding: 2rem;
             position: relative;
             z-index: 1;
             align-items: start;
@@ -132,13 +141,13 @@
             max-height: calc(100vh - 4rem);
             overflow-y: auto;
             border: 1px solid rgba(255, 255, 255, 0.8);
-            width: 500px; /* 固定宽度，包含滚动条空间 */
-            box-sizing: content-box; /* 滚动条宽度包含在总宽度内 */
+            width: 100%;
+            box-sizing: border-box;
         }
 
         /* 控制面板内容区域 - 确保内容宽度固定 */
         .control-panel > * {
-            width: 476px; /* 500px - 滚动条宽度 */
+            width: 100%;
             box-sizing: border-box;
         }
 
@@ -1672,11 +1681,85 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            position: sticky;
+            top: 2rem;
+            max-height: calc(100vh - 4rem);
+            overflow: auto;
+            scrollbar-width: thin;
+        }
+
+        .preview-toolbar {
+            width: min(100%, 680px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+            color: #475569;
+            font-size: 0.85rem;
+        }
+
+        .preview-title {
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .poster-size-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .poster-size-badge,
+        .poster-length-notice {
+            padding: 0.35rem 0.65rem;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.78);
+            border: 1px solid rgba(102,126,234,0.16);
+        }
+
+        .poster-length-notice {
+            display: none;
+            color: #9a5b00;
+            background: #fff7df;
+            border-color: #f4d58d;
+        }
+
+        .poster-length-notice.visible {
+            display: inline-flex;
+        }
+
+        .poster-length-notice.very-long {
+            color: #9f2d2d;
+            background: #fff0f0;
+            border-color: #fecaca;
+        }
+
+        .poster-stage {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow: hidden;
+            padding: 0 1rem 2rem;
+        }
+
+        .poster-scale-frame {
+            position: relative;
+            flex: none;
+        }
+
+        .poster-scale-layer {
+            width: 600px;
+            transform-origin: top left;
         }
 
         .poster {
             width: 600px;
             min-height: 800px;
+            height: auto;
             background: var(--gradient-1);
             border-radius: 20px;
             padding: 3rem;
@@ -1718,6 +1801,22 @@
         .poster.gradient-29 { color: #1a202c; } /* 多彩渐变 - 深色文字 */
         .poster.gradient-30 { color: #1a202c; } /* 多彩渐变 - 深色文字 */
 
+        .poster.gradient-1::before,
+        .poster.gradient-5::before,
+        .poster.gradient-6::before,
+        .poster.gradient-7::before,
+        .poster.gradient-9::before,
+        .poster.gradient-15::before,
+        .poster.gradient-16::before,
+        .poster.gradient-18::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: linear-gradient(180deg, rgba(15,23,42,0.08), rgba(15,23,42,0.18));
+        }
+
         .poster.rounded {
             border-radius: 20px;
         }
@@ -1729,7 +1828,8 @@
         .poster-content {
             position: relative;
             z-index: 1;
-            height: 100%;
+            min-height: 704px;
+            height: auto;
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
@@ -2780,19 +2880,325 @@
             opacity: 0.8;
         }
 
-        @media (max-width: 1200px) {
+        .mobile-view-switch,
+        .mobile-action-bar {
+            display: none;
+        }
+
+        .export-status-toast {
+            position: fixed;
+            left: 50%;
+            top: 1rem;
+            z-index: 100;
+            max-width: calc(100vw - 2rem);
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            color: white;
+            background: #334155;
+            box-shadow: 0 10px 30px rgba(15,23,42,0.2);
+            transform: translate(-50%, -140%);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 180ms ease, opacity 180ms ease;
+        }
+
+        .export-status-toast.visible {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+
+        .export-status-toast.error {
+            background: #b42318;
+        }
+
+        .app-icon {
+            width: 18px;
+            height: 18px;
+            flex: none;
+            display: inline-block;
+            background: currentColor;
+            -webkit-mask-position: center;
+            mask-position: center;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+        }
+
+        .app-icon-edit {
+            -webkit-mask-image: url('src/icons/edit.svg');
+            mask-image: url('src/icons/edit.svg');
+        }
+
+        .app-icon-preview {
+            -webkit-mask-image: url('src/icons/preview.svg');
+            mask-image: url('src/icons/preview.svg');
+        }
+
+        .app-icon-download {
+            -webkit-mask-image: url('src/icons/download.svg');
+            mask-image: url('src/icons/download.svg');
+        }
+
+        /* 手机成品的基础可读性：保持字号，内容增加时由海报自然增高 */
+        #poster .poster-description {
+            font-size: 1.25rem;
+            line-height: 1.65;
+        }
+
+        #poster .poster-section-title {
+            font-size: 1.05rem;
+        }
+
+        #poster .poster-guest.with-title .poster-guest-name,
+        #poster .poster-guest.with-bio .poster-guest-name {
+            font-size: 1.2rem;
+        }
+
+        #poster .poster-guest.with-title .poster-guest-title,
+        #poster .poster-guest.with-bio .poster-guest-title {
+            font-size: 1.05rem;
+        }
+
+        #poster .poster-guest.with-bio .poster-guest-bio,
+        #poster .poster-info,
+        #poster .event-detail {
+            font-size: 1rem;
+        }
+
+        #poster .poster-qr img {
+            width: 120px;
+            height: 120px;
+            border-radius: 0;
+        }
+
+        #poster .poster-qr.style-default,
+        #poster .poster-qr.style-horizontal {
+            padding: 0.55rem;
+        }
+
+        @media (max-width: 1023px) {
             .container {
                 grid-template-columns: 1fr;
+                max-width: 780px;
             }
+
             .control-panel {
                 position: static;
                 max-height: none;
+            }
+
+            .preview-panel {
+                grid-column: 1;
+                position: static;
+                max-height: none;
+                overflow: visible;
+            }
+        }
+
+        @media (max-width: 767px) {
+            body {
+                padding-bottom: 76px;
+            }
+
+            .mobile-view-switch {
+                position: sticky;
+                top: 0;
+                z-index: 50;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.35rem;
+                padding: 0.65rem 1rem;
+                background: rgba(245,247,250,0.94);
+                backdrop-filter: blur(16px);
+                border-bottom: 1px solid rgba(102,126,234,0.12);
+            }
+
+            .mobile-view-btn {
+                min-height: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+                border: 1px solid transparent;
+                border-radius: 12px;
+                background: transparent;
+                color: #64748b;
+                font: inherit;
+                font-weight: 600;
+            }
+
+            .mobile-view-btn.active {
+                color: #5b63d3;
+                background: white;
+                border-color: rgba(102,126,234,0.18);
+                box-shadow: 0 4px 14px rgba(102,126,234,0.12);
+            }
+
+            .container {
+                display: block;
+                width: 100%;
+                max-width: none;
+                min-height: 0;
+                padding: 1rem;
+            }
+
+            .container[data-mobile-view="editor"] .preview-panel,
+            .container[data-mobile-view="preview"] .control-panel {
+                display: none;
+            }
+
+            .control-panel {
+                width: 100%;
+                padding: 1rem;
+                border-radius: 18px;
+                box-shadow: 0 6px 22px rgba(15,23,42,0.08);
+            }
+
+            .control-panel > * {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .panel-header {
+                margin-bottom: 1.5rem;
+                padding-bottom: 1rem;
+            }
+
+            .panel-title {
+                font-size: 1.7rem;
+            }
+
+            .control-buttons-section {
+                margin-bottom: 1.25rem !important;
+            }
+
+            .control-btn.compact,
+            .export-btn.compact {
+                min-height: 44px;
+                padding: 0.7rem 0.55rem;
+            }
+
+            .guest-block-grid {
+                flex-direction: column;
+            }
+
+            .guest-photo-area {
+                width: 100%;
+            }
+
+            .guest-photo-wrapper {
+                height: 180px;
+            }
+
+            .guest-photo-controls {
+                grid-template-columns: repeat(6, 1fr);
+                grid-template-rows: 1fr;
+            }
+
+            .guest-photo-controls .photo-control-btn {
+                grid-column: auto !important;
+                grid-row: auto !important;
+            }
+
+            .photo-control-btn,
+            .layout-btn,
+            .align-btn {
+                min-width: 44px;
+                min-height: 44px;
+            }
+
+            .photo-control-btn svg,
+            .layout-btn svg {
+                width: 18px;
+                height: 18px;
+            }
+
+            .preview-panel {
+                width: 100%;
+                min-width: 0;
+                animation: mobilePanelIn 220ms ease-out;
+            }
+
+            .preview-toolbar {
+                width: 100%;
+                align-items: flex-start;
+                padding: 0 0.25rem;
+            }
+
+            .poster-size-status {
+                font-size: 0.75rem;
+            }
+
+            .poster-stage {
+                padding: 0 0 1rem;
+            }
+
+            .mobile-action-bar {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 60;
+                display: grid;
+                grid-template-columns: 1fr 1.25fr;
+                gap: 0.75rem;
+                padding: 0.7rem max(1rem, env(safe-area-inset-right)) calc(0.7rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+                background: rgba(255,255,255,0.96);
+                backdrop-filter: blur(18px);
+                border-top: 1px solid rgba(102,126,234,0.14);
+            }
+
+            .mobile-action-btn {
+                min-height: 48px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.55rem;
+                border: 1px solid rgba(102,126,234,0.2);
+                border-radius: 13px;
+                background: white;
+                color: #5b63d3;
+                font: inherit;
+                font-weight: 700;
+            }
+
+            .mobile-action-btn.primary {
+                color: white;
+                border-color: transparent;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                box-shadow: 0 5px 16px rgba(102,126,234,0.28);
+            }
+
+            @keyframes mobilePanelIn {
+                from { opacity: 0; transform: translateY(8px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .preview-panel,
+            .mobile-view-btn,
+            .mobile-action-btn {
+                animation: none;
+                transition: none;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <nav class="mobile-view-switch" aria-label="手机端工作区切换">
+        <button type="button" class="mobile-view-btn active" data-mobile-view-target="editor" aria-selected="true">
+            <span class="app-icon app-icon-edit" aria-hidden="true"></span>
+            <span>编辑</span>
+        </button>
+        <button type="button" class="mobile-view-btn" data-mobile-view-target="preview" aria-selected="false">
+            <span class="app-icon app-icon-preview" aria-hidden="true"></span>
+            <span>预览</span>
+        </button>
+    </nav>
+
+    <div class="container" id="posterWorkspace" data-mobile-view="editor">
         <!-- 控制面板 -->
         <div class="control-panel">
             <div class="panel-header">
@@ -2956,41 +3362,54 @@
         </div>
 
         <!-- 海报预览 -->
-        <div class="preview-panel">
-            <div class="poster" id="poster">
-                <div class="poster-content">
-                    <div class="poster-title" id="posterTitle">年度设计大会</div>
-                    <div class="poster-subtitle" id="posterSubtitle">Annual Design Conference 2024</div>
-                    <div class="poster-description" id="posterDescription">探索设计的边界，共创美好未来。本次大会将汇聚全球顶尖设计师，分享最新设计趋势与创新思维。</div>
+        <div class="preview-panel" id="previewPanel">
+            <div class="preview-toolbar">
+                <span class="preview-title">海报预览</span>
+                <div class="poster-size-status" aria-live="polite">
+                    <span class="poster-size-badge" id="posterSizeBadge">导出尺寸：1200 × 1600</span>
+                    <span class="poster-length-notice" id="posterLengthNotice"></span>
+                </div>
+            </div>
+            <div class="poster-stage" id="posterStage">
+                <div class="poster-scale-frame" id="posterScaleFrame">
+                    <div class="poster-scale-layer" id="posterScaleLayer">
+                        <div class="poster" id="poster">
+                            <div class="poster-content">
+                                <div class="poster-title" id="posterTitle">年度设计大会</div>
+                                <div class="poster-subtitle" id="posterSubtitle">Annual Design Conference 2024</div>
+                                <div class="poster-description" id="posterDescription">探索设计的边界，共创美好未来。本次大会将汇聚全球顶尖设计师，分享最新设计趋势与创新思维。</div>
 
-                    <!-- 海报底部二维码 -->
-                    <div class="poster-footer">
-                        <div class="poster-info-group">
-                            <div class="poster-info">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                    <line x1="16" y1="2" x2="16" y2="6"/>
-                                    <line x1="8" y1="2" x2="8" y2="6"/>
-                                    <line x1="3" y1="10" x2="21" y2="10"/>
-                                </svg>
-                                <span id="posterDate">2024年3月15日</span>
-                            </div>
-                            <div class="poster-info">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
-                                    <circle cx="12" cy="10" r="3"/>
-                                </svg>
-                                <span id="posterLocation">线上会议</span>
-                            </div>
-                        </div>
-                        
-                        <div class="poster-footer-divider"></div>
-                        
-                        <div class="poster-qr">
-                            <img id="posterQrCode" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://example.com/event" alt="二维码">
-                            <div class="poster-qr-text">
-                                <h3 id="posterQrText">扫码查看</h3>
-                                <p>Scan to view</p>
+                                <!-- 海报底部二维码 -->
+                                <div class="poster-footer">
+                                    <div class="poster-info-group">
+                                        <div class="poster-info">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                                <line x1="3" y1="10" x2="21" y2="10"/>
+                                            </svg>
+                                            <span id="posterDate">2024年3月15日</span>
+                                        </div>
+                                        <div class="poster-info">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                                                <circle cx="12" cy="10" r="3"/>
+                                            </svg>
+                                            <span id="posterLocation">线上会议</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="poster-footer-divider"></div>
+
+                                    <div class="poster-qr">
+                                        <img id="posterQrCode" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://example.com/event" alt="二维码">
+                                        <div class="poster-qr-text">
+                                            <h3 id="posterQrText">扫码查看</h3>
+                                            <p>Scan to view</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2998,6 +3417,19 @@
             </div>
         </div>
     </div>
+
+    <div class="mobile-action-bar" aria-label="手机端主要操作">
+        <button type="button" class="mobile-action-btn" id="mobileViewToggleBtn">
+            <span class="app-icon app-icon-preview" aria-hidden="true"></span>
+            <span id="mobileViewToggleText">查看预览</span>
+        </button>
+        <button type="button" class="mobile-action-btn primary" id="mobileExportBtn">
+            <span class="app-icon app-icon-download" aria-hidden="true"></span>
+            <span>导出海报</span>
+        </button>
+    </div>
+
+    <div class="export-status-toast" id="exportStatusToast" role="status" aria-live="polite"></div>
 
     <script>
         // 组件数据
@@ -4324,6 +4756,146 @@
 
         // 添加人员组按钮（用于人员组件）
 
+        const mobileWorkspaceQuery = window.matchMedia('(max-width: 767px)');
+        const mobileScrollPositions = { editor: 0, preview: 0 };
+        let currentMobileView = 'editor';
+        let previewLayoutFrame = null;
+
+        const updatePreviewLayout = () => {
+            const poster = document.getElementById('poster');
+            const stage = document.getElementById('posterStage');
+            const frame = document.getElementById('posterScaleFrame');
+            const layer = document.getElementById('posterScaleLayer');
+            const sizeBadge = document.getElementById('posterSizeBadge');
+            const lengthNotice = document.getElementById('posterLengthNotice');
+            if (!poster || !stage || !frame || !layer) return;
+
+            const naturalWidth = poster.offsetWidth || 600;
+            const naturalHeight = Math.max(poster.scrollHeight, poster.offsetHeight);
+            const exportWidth = 1200;
+            const exportHeight = Math.ceil(naturalHeight * (exportWidth / naturalWidth));
+            const availableWidth = Math.max(0, stage.clientWidth - 32);
+
+            if (availableWidth > 0) {
+                const scale = Math.min(1, availableWidth / naturalWidth);
+                layer.style.transform = `scale(${scale})`;
+                frame.style.width = `${naturalWidth * scale}px`;
+                frame.style.height = `${naturalHeight * scale}px`;
+            }
+
+            if (sizeBadge) {
+                sizeBadge.textContent = `导出尺寸：${exportWidth} × ${exportHeight}`;
+            }
+
+            if (lengthNotice) {
+                lengthNotice.classList.remove('visible', 'very-long');
+                if (exportHeight > 2800) {
+                    lengthNotice.textContent = '超长海报，建议检查手机阅读效果';
+                    lengthNotice.classList.add('visible', 'very-long');
+                } else if (exportHeight > 2200) {
+                    lengthNotice.textContent = '长图模式';
+                    lengthNotice.classList.add('visible');
+                } else {
+                    lengthNotice.textContent = '';
+                }
+            }
+        };
+
+        const schedulePreviewLayout = () => {
+            if (previewLayoutFrame) cancelAnimationFrame(previewLayoutFrame);
+            previewLayoutFrame = requestAnimationFrame(() => {
+                previewLayoutFrame = null;
+                updatePreviewLayout();
+            });
+        };
+
+        const setMobileView = (view, options = {}) => {
+            const workspace = document.getElementById('posterWorkspace');
+            if (!workspace || !['editor', 'preview'].includes(view)) return;
+
+            if (mobileWorkspaceQuery.matches && options.preserveScroll !== false) {
+                mobileScrollPositions[currentMobileView] = window.scrollY;
+            }
+
+            currentMobileView = view;
+            workspace.dataset.mobileView = view;
+
+            document.querySelectorAll('[data-mobile-view-target]').forEach(button => {
+                const isActive = button.dataset.mobileViewTarget === view;
+                button.classList.toggle('active', isActive);
+                button.setAttribute('aria-selected', String(isActive));
+            });
+
+            const toggleText = document.getElementById('mobileViewToggleText');
+            const toggleIcon = document.querySelector('#mobileViewToggleBtn .app-icon');
+            if (toggleText) toggleText.textContent = view === 'editor' ? '查看预览' : '返回编辑';
+            if (toggleIcon) {
+                toggleIcon.classList.toggle('app-icon-preview', view === 'editor');
+                toggleIcon.classList.toggle('app-icon-edit', view === 'preview');
+            }
+
+            const controlPanel = workspace.querySelector('.control-panel');
+            const previewPanel = workspace.querySelector('.preview-panel');
+            if (mobileWorkspaceQuery.matches) {
+                controlPanel?.setAttribute('aria-hidden', String(view !== 'editor'));
+                previewPanel?.setAttribute('aria-hidden', String(view !== 'preview'));
+            } else {
+                controlPanel?.removeAttribute('aria-hidden');
+                previewPanel?.removeAttribute('aria-hidden');
+            }
+
+            requestAnimationFrame(() => {
+                schedulePreviewLayout();
+                if (mobileWorkspaceQuery.matches && options.restoreScroll !== false) {
+                    window.scrollTo(0, mobileScrollPositions[view] || 0);
+                }
+            });
+        };
+
+        const setupResponsiveWorkspace = () => {
+            document.querySelectorAll('[data-mobile-view-target]').forEach(button => {
+                button.addEventListener('click', () => setMobileView(button.dataset.mobileViewTarget));
+            });
+
+            document.getElementById('mobileViewToggleBtn')?.addEventListener('click', () => {
+                setMobileView(currentMobileView === 'editor' ? 'preview' : 'editor');
+            });
+
+            const workspace = document.getElementById('posterWorkspace');
+            let touchStart = null;
+            workspace?.addEventListener('touchstart', event => {
+                if (!mobileWorkspaceQuery.matches || event.touches.length !== 1) return;
+                const target = event.target;
+                if (target.closest('input, textarea, select, button, .guest-photo-wrapper, .photo-controls, [data-no-swipe]')) return;
+                const touch = event.touches[0];
+                const edgeGuard = 24;
+                if (touch.clientX <= edgeGuard || touch.clientX >= window.innerWidth - edgeGuard) return;
+                touchStart = { x: touch.clientX, y: touch.clientY };
+            }, { passive: true });
+
+            workspace?.addEventListener('touchend', event => {
+                if (!touchStart || !mobileWorkspaceQuery.matches || event.changedTouches.length !== 1) {
+                    touchStart = null;
+                    return;
+                }
+                const touch = event.changedTouches[0];
+                const deltaX = touch.clientX - touchStart.x;
+                const deltaY = touch.clientY - touchStart.y;
+                touchStart = null;
+
+                if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.25) return;
+                if (deltaX < 0 && currentMobileView === 'editor') setMobileView('preview');
+                if (deltaX > 0 && currentMobileView === 'preview') setMobileView('editor');
+            }, { passive: true });
+
+            window.addEventListener('resize', schedulePreviewLayout);
+            mobileWorkspaceQuery.addEventListener('change', () => setMobileView(currentMobileView, {
+                preserveScroll: false,
+                restoreScroll: false
+            }));
+            setMobileView('editor', { preserveScroll: false, restoreScroll: false });
+        };
+
         // 更新海报
         const updatePoster = () => {
             const posterContent = document.querySelector('.poster-content');
@@ -4715,6 +5287,7 @@
                 posterContent.appendChild(wrapper);
             });
 
+            schedulePreviewLayout();
             console.log('海报更新完成，当前有', posterComponents.filter(c => c.visible).length, '个可见组件');
         };
 
@@ -4754,72 +5327,154 @@
         // DOM 加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM 加载完成，开始初始化组件系统...');
+            setupResponsiveWorkspace();
+
+            const posterElement = document.getElementById('poster');
+            if ('ResizeObserver' in window && posterElement) {
+                const posterResizeObserver = new ResizeObserver(schedulePreviewLayout);
+                posterResizeObserver.observe(posterElement);
+            }
 
             setTimeout(() => {
                 initComponentSystem();
 
                 // 导出海报
                 const exportBtn = document.getElementById('exportBtn');
+                const mobileExportBtn = document.getElementById('mobileExportBtn');
+                const exportButtons = [exportBtn, mobileExportBtn].filter(Boolean);
+                let exportToastTimer = null;
+                const showExportMessage = (message, isError = false) => {
+                    const toast = document.getElementById('exportStatusToast');
+                    if (!toast) return;
+                    toast.textContent = message;
+                    toast.classList.toggle('error', isError);
+                    toast.classList.add('visible');
+                    clearTimeout(exportToastTimer);
+                    exportToastTimer = setTimeout(() => toast.classList.remove('visible'), 2600);
+                };
+                const setExportState = isExporting => {
+                    exportButtons.forEach(button => {
+                        button.disabled = isExporting;
+                        button.setAttribute('aria-busy', String(isExporting));
+                    });
+                    const desktopText = exportBtn?.querySelector('span');
+                    const mobileText = mobileExportBtn?.querySelector('span:last-child');
+                    if (desktopText) desktopText.textContent = isExporting ? '导出中...' : '导出海报';
+                    if (mobileText) mobileText.textContent = isExporting ? '导出中...' : '导出海报';
+                };
+
                 if (exportBtn) {
                     exportBtn.addEventListener('click', async function() {
                         console.log('开始导出海报...');
                         
-                        if (typeof html2canvas === 'undefined') {
-                            alert('html2canvas库未加载，请刷新页面重试');
-                            console.error('html2canvas is not defined');
+                        if (typeof htmlToImage === 'undefined') {
+                            showExportMessage('海报导出库未加载，请刷新页面重试', true);
+                            console.error('htmlToImage is not defined');
                             return;
                         }
                         
                         const poster = document.getElementById('poster');
+                        const previewPanel = document.getElementById('previewPanel');
 
                         if (!poster) {
-                            alert('未找到海报元素');
+                            showExportMessage('未找到海报元素', true);
                             return;
                         }
 
+                        let previewInlineStyle = null;
+                        let previewTemporarilyShown = false;
                         try {
-                            // 显示导出提示
-                            exportBtn.disabled = true;
-                            exportBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg><span>导出中...</span>';
+                            setExportState(true);
+                            if (previewPanel && getComputedStyle(previewPanel).display === 'none') {
+                                previewInlineStyle = previewPanel.getAttribute('style');
+                                previewTemporarilyShown = true;
+                                previewPanel.style.display = 'flex';
+                                previewPanel.style.position = 'fixed';
+                                previewPanel.style.left = '-10000px';
+                                previewPanel.style.top = '0';
+                                previewPanel.style.width = '680px';
+                                previewPanel.style.maxHeight = 'none';
+                                previewPanel.style.overflow = 'visible';
+                            }
+                            if (document.fonts?.ready) await document.fonts.ready;
                             
                             // 获取海报原始尺寸
-                            const posterRect = poster.getBoundingClientRect();
                             const targetWidth = 1200;
-                            const pixelRatio = targetWidth / posterRect.width;
-                            
-                            // 使用 html-to-image 库，更好地支持 CSS
-                            const dataUrl = await htmlToImage.toPng(poster, {
-                                quality: 1.0,
+                            const naturalWidth = poster.offsetWidth;
+                            const naturalHeight = Math.max(poster.scrollHeight, poster.offsetHeight);
+                            const pixelRatio = targetWidth / naturalWidth;
+
+                            const posterImages = Array.from(poster.querySelectorAll('img'));
+                            await Promise.all(posterImages.map(image => {
+                                if (image.complete) return Promise.resolve();
+                                return new Promise(resolve => {
+                                    const finish = () => resolve();
+                                    image.addEventListener('load', finish, { once: true });
+                                    image.addEventListener('error', finish, { once: true });
+                                    setTimeout(finish, 3000);
+                                });
+                            }));
+
+                            const renderPoster = scale => htmlToImage.toPng(poster, {
+                                quality: 1,
                                 backgroundColor: '#ffffff',
-                                pixelRatio: pixelRatio,  // 设置像素比以获得高分辨率
-                                skipFonts: true  // 跳过字体加载检查，加快速度
+                                pixelRatio: scale,
+                                cacheBust: true,
+                                skipFonts: true
                             });
+
+                            let renderedScale = pixelRatio;
+                            let dataUrl = await renderPoster(renderedScale);
+                            if (!dataUrl || dataUrl === 'data:,') {
+                                renderedScale = 1;
+                                dataUrl = await renderPoster(renderedScale);
+                            }
+                            if (!dataUrl || dataUrl === 'data:,') throw new Error('未能生成图片数据');
+
+                            let blob = await (await fetch(dataUrl)).blob();
+                            if (renderedScale !== pixelRatio) {
+                                const bitmap = await createImageBitmap(blob);
+                                const exportCanvas = document.createElement('canvas');
+                                exportCanvas.width = targetWidth;
+                                exportCanvas.height = Math.ceil(naturalHeight * pixelRatio);
+                                const context = exportCanvas.getContext('2d');
+                                context.imageSmoothingEnabled = true;
+                                context.imageSmoothingQuality = 'high';
+                                context.drawImage(bitmap, 0, 0, exportCanvas.width, exportCanvas.height);
+                                bitmap.close();
+                                blob = await new Promise(resolve => exportCanvas.toBlob(resolve, 'image/png', 1));
+                            }
+                            if (!blob || !blob.size) throw new Error('生成的图片数据为空');
 
                             const link = document.createElement('a');
                             link.download = 'poster.png';
-                            link.href = dataUrl;
+                            const objectUrl = URL.createObjectURL(blob);
+                            link.href = objectUrl;
                             
                             // 触发下载
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);
+                            setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
 
                             console.log('海报导出成功');
-                            
-                            // 恢复按钮状态
-                            exportBtn.disabled = false;
-                            exportBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>导出海报</span>';
-                            
-                            alert('海报导出成功！');
+                            showExportMessage(`海报导出成功：${targetWidth} × ${Math.ceil(naturalHeight * pixelRatio)}`);
                         } catch (error) {
-                            alert('导出失败: ' + (error.message || '请检查网络连接后重试'));
+                            showExportMessage('导出失败：' + (error.message || '请检查网络连接后重试'), true);
                             console.error('Export error:', error);
-                            
-                            // 恢复按钮状态
-                            exportBtn.disabled = false;
-                            exportBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>导出海报</span>';
+                        } finally {
+                            if (previewPanel && previewTemporarilyShown) {
+                                if (previewInlineStyle) {
+                                    previewPanel.setAttribute('style', previewInlineStyle);
+                                } else {
+                                    previewPanel.removeAttribute('style');
+                                }
+                                schedulePreviewLayout();
+                            }
+                            setExportState(false);
                         }
                     });
+                    mobileExportBtn?.addEventListener('click', () => exportBtn.click());
                 } else {
                     console.error('未找到导出按钮');
                 }

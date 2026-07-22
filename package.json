@@ -6,7 +6,7 @@
   "scripts": {
     "start": "npx http-server -p 8080 -o",
     "dev": "npx http-server -p 8080 -o",
-    "build": "mkdir -p dist && cp index.html poster-generator.html package.json dist/ && echo 'Build complete'"
+    "build": "mkdir -p dist && cp index.html poster-generator.html package.json dist/ && cp -r src dist/ && echo 'Build complete'"
   },
   "keywords": [
     "poster",
