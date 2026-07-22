@@ -881,6 +881,11 @@
             color: #94a3b8;
             cursor: move;
             padding: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            touch-action: none;
         }
 
         .component-drag-handle:hover {
@@ -910,7 +915,37 @@
             padding: 0.25rem;
             display: flex;
             align-items: center;
+            justify-content: center;
             flex-shrink: 0;
+            touch-action: none;
+        }
+
+        body.touch-sorting {
+            user-select: none;
+            overscroll-behavior: contain;
+        }
+
+        .poster-component.touch-dragging,
+        .personnel-group.touch-dragging,
+        .guest-block.touch-dragging {
+            opacity: 0.78;
+            border: 2px dashed #667eea;
+            box-shadow: 0 10px 24px rgba(102, 126, 234, 0.16);
+        }
+
+        .poster-component.touch-dragging .component-content,
+        .personnel-group.touch-dragging .personnel-group-content,
+        .guest-block.touch-dragging .guest-photo-area,
+        .guest-block.touch-dragging .guest-info-area > :not(.guest-block-header) {
+            display: none !important;
+        }
+
+        .guest-block.touch-dragging .guest-block-grid {
+            min-height: 44px;
+        }
+
+        .guest-block.touch-dragging .guest-info-area {
+            width: 100%;
         }
 
         .personnel-group-drag-handle:hover,
@@ -3092,13 +3127,61 @@
             }
 
             .guest-photo-controls {
-                grid-template-columns: repeat(6, 1fr);
-                grid-template-rows: 1fr;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                grid-template-rows: repeat(2, 44px);
             }
 
             .guest-photo-controls .photo-control-btn {
                 grid-column: auto !important;
                 grid-row: auto !important;
+                min-width: 0;
+            }
+
+            .personnel-group {
+                padding: 0.75rem;
+            }
+
+            .personnel-group-header {
+                display: grid;
+                grid-template-columns: 44px minmax(0, 1fr) 44px;
+                gap: 0.5rem;
+                align-items: center;
+            }
+
+            .personnel-group-drag-handle {
+                grid-column: 1;
+                grid-row: 1;
+                width: 44px;
+                height: 44px;
+                padding: 0;
+            }
+
+            .guest-block-drag-handle {
+                width: 44px;
+                height: 44px;
+                padding: 0;
+            }
+
+            .personnel-group-title-input {
+                grid-column: 2 / 4;
+                grid-row: 1;
+                width: 100%;
+                min-width: 0;
+                height: 44px;
+            }
+
+            .personnel-group-toggle {
+                grid-column: 1 / 3;
+                grid-row: 2;
+                min-height: 44px;
+                padding-left: 0.25rem;
+            }
+
+            .personnel-group-remove {
+                grid-column: 3;
+                grid-row: 2;
+                width: 44px;
+                height: 44px;
             }
 
             .photo-control-btn,
@@ -3469,6 +3552,80 @@
             }
         };
 
+        // 手机端不支持 HTML5 draggable，使用 Pointer Events 实现触摸排序。
+        // 拖动期间会给条目加上 touch-dragging，让大块内容临时折叠，减少长列表跳动。
+        const bindTouchSorting = ({ handle, item, itemSelector, getContainer, onCommit }) => {
+            if (!handle || !item) return;
+
+            let activePointerId = null;
+            let reordered = false;
+
+            const finishSorting = () => {
+                if (activePointerId === null) return;
+
+                const pointerId = activePointerId;
+                activePointerId = null;
+
+                try {
+                    if (handle.hasPointerCapture(pointerId)) {
+                        handle.releasePointerCapture(pointerId);
+                    }
+                } catch (error) {
+                    // 指针可能已由浏览器取消，无需额外处理。
+                }
+
+                item.classList.remove('touch-dragging');
+                document.body.classList.remove('touch-sorting');
+
+                if (reordered) {
+                    onCommit();
+                    updatePoster();
+                }
+                reordered = false;
+            };
+
+            handle.addEventListener('pointerdown', (event) => {
+                if (event.pointerType === 'mouse' || activePointerId !== null) return;
+
+                activePointerId = event.pointerId;
+                reordered = false;
+                handle.setPointerCapture(event.pointerId);
+                item.classList.add('touch-dragging');
+                document.body.classList.add('touch-sorting');
+                event.preventDefault();
+            });
+
+            handle.addEventListener('pointermove', (event) => {
+                if (event.pointerId !== activePointerId) return;
+                event.preventDefault();
+
+                const container = getContainer();
+                if (!container) return;
+
+                if (event.clientY < 90) {
+                    window.scrollBy({ top: -12, behavior: 'auto' });
+                } else if (event.clientY > window.innerHeight - 90) {
+                    window.scrollBy({ top: 12, behavior: 'auto' });
+                }
+
+                const target = document.elementFromPoint(event.clientX, event.clientY)?.closest(itemSelector);
+                if (!target || target === item || target.parentElement !== container) return;
+
+                const targetRect = target.getBoundingClientRect();
+                const insertAfter = event.clientY > targetRect.top + targetRect.height / 2;
+                const referenceNode = insertAfter ? target.nextElementSibling : target;
+
+                if (referenceNode !== item && (!insertAfter || target.nextElementSibling !== item)) {
+                    container.insertBefore(item, referenceNode);
+                    reordered = true;
+                }
+            });
+
+            handle.addEventListener('pointerup', finishSorting);
+            handle.addEventListener('pointercancel', finishSorting);
+            handle.addEventListener('lostpointercapture', finishSorting);
+        };
+
         // 初始化组件系统
         const initComponentSystem = () => {
             console.log('初始化组件系统...');
@@ -3555,14 +3712,14 @@
 
             component.innerHTML = `
                 <div class="component-header">
-                    <div class="component-drag-handle">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="9" cy="12" r="1"/>
-                            <circle cx="9" cy="5" r="1"/>
-                            <circle cx="9" cy="19" r="1"/>
-                            <circle cx="15" cy="12" r="1"/>
-                            <circle cx="15" cy="5" r="1"/>
-                            <circle cx="15" cy="19" r="1"/>
+                    <div class="component-drag-handle" data-no-swipe title="拖动排序">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true">
+                            <circle fill="currentColor" cx="9" cy="12" r="1"/>
+                            <circle fill="currentColor" cx="9" cy="5" r="1"/>
+                            <circle fill="currentColor" cx="9" cy="19" r="1"/>
+                            <circle fill="currentColor" cx="15" cy="12" r="1"/>
+                            <circle fill="currentColor" cx="15" cy="5" r="1"/>
+                            <circle fill="currentColor" cx="15" cy="19" r="1"/>
                         </svg>
                     </div>
                     <span class="component-title">${typeInfo.name}</span>
@@ -3858,6 +4015,20 @@
                 }
             });
 
+            bindTouchSorting({
+                handle: dragHandle,
+                item: component,
+                itemSelector: '.poster-component',
+                getContainer: () => component.parentElement,
+                onCommit: () => {
+                    const container = component.parentElement;
+                    if (!container) return;
+                    const order = Array.from(container.querySelectorAll(':scope > .poster-component'))
+                        .map(element => Number(element.dataset.componentId));
+                    posterComponents.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+                }
+            });
+
             // 输入框事件
             const inputs = component.querySelectorAll('.component-input-text');
             inputs.forEach(input => {
@@ -4134,11 +4305,14 @@
             group.dataset.groupId = groupId;
             group.innerHTML = `
                 <div class="personnel-group-header">
-                    <div class="personnel-group-drag-handle" title="拖动排序">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="8" y1="6" x2="16" y2="6"/>
-                            <line x1="8" y1="12" x2="16" y2="12"/>
-                            <line x1="8" y1="18" x2="16" y2="18"/>
+                    <div class="personnel-group-drag-handle" data-no-swipe title="拖动排序">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true">
+                            <circle fill="currentColor" cx="9" cy="12" r="1"/>
+                            <circle fill="currentColor" cx="9" cy="5" r="1"/>
+                            <circle fill="currentColor" cx="9" cy="19" r="1"/>
+                            <circle fill="currentColor" cx="15" cy="12" r="1"/>
+                            <circle fill="currentColor" cx="15" cy="5" r="1"/>
+                            <circle fill="currentColor" cx="15" cy="19" r="1"/>
                         </svg>
                     </div>
                     <input type="text" class="personnel-group-title-input" value="${groupData.title}">
@@ -4301,11 +4475,14 @@
                     </div>
                     <div class="guest-info-area">
                         <div class="guest-block-header">
-                            <div class="guest-block-drag-handle" title="拖动排序">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <line x1="8" y1="6" x2="16" y2="6"/>
-                                    <line x1="8" y1="12" x2="16" y2="12"/>
-                                    <line x1="8" y1="18" x2="16" y2="18"/>
+                            <div class="guest-block-drag-handle" data-no-swipe title="拖动排序">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true">
+                                    <circle fill="currentColor" cx="9" cy="12" r="1"/>
+                                    <circle fill="currentColor" cx="9" cy="5" r="1"/>
+                                    <circle fill="currentColor" cx="9" cy="19" r="1"/>
+                                    <circle fill="currentColor" cx="15" cy="12" r="1"/>
+                                    <circle fill="currentColor" cx="15" cy="5" r="1"/>
+                                    <circle fill="currentColor" cx="15" cy="19" r="1"/>
                                 </svg>
                             </div>
                             <button type="button" class="guest-remove-btn">×</button>
@@ -4450,6 +4627,24 @@
                     }
 
                     updatePoster();
+                }
+            });
+
+            bindTouchSorting({
+                handle: groupDragHandle,
+                item: group,
+                itemSelector: '.personnel-group',
+                getContainer: () => group.parentElement,
+                onCommit: () => {
+                    const wrapper = group.parentElement;
+                    if (!wrapper) return;
+                    const order = Array.from(wrapper.querySelectorAll(':scope > .personnel-group'))
+                        .map(element => Number(element.dataset.groupId));
+                    const orderedGroups = order
+                        .map(id => personnelGroups.find(groupItem => groupItem.id === id))
+                        .filter(Boolean);
+                    const orderedIds = new Set(order);
+                    personnelGroups = [...orderedGroups, ...personnelGroups.filter(groupItem => !orderedIds.has(groupItem.id))];
                 }
             });
         };
@@ -4657,6 +4852,21 @@
                     }
 
                     updatePoster();
+                }
+            });
+
+            bindTouchSorting({
+                handle: blockDragHandle,
+                item: block,
+                itemSelector: '.guest-block',
+                getContainer: () => block.parentElement,
+                onCommit: () => {
+                    const personsContainer = block.parentElement;
+                    const groupData = personnelGroups.find(groupItem => groupItem.id == groupId);
+                    if (!personsContainer || !groupData) return;
+                    const order = Array.from(personsContainer.querySelectorAll(':scope > .guest-block'))
+                        .map(element => Number(element.dataset.personId));
+                    groupData.persons.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
                 }
             });
         };
